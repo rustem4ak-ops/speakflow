@@ -1,13 +1,26 @@
-# SpeakFlow v5.4 — Kokoro pre-generated audio
+# SpeakFlow 6.0
 
-This version does **not** run Kokoro/ONNX inside the iPhone browser. The natural Kokoro `af_heart` voice is generated once by GitHub Actions and stored as WAV files in the repository. iPhone/Safari only downloads and plays the finished audio.
+Готовая статическая PWA-версия SpeakFlow.
 
-Why: Kokoro browser inference is currently unreliable on iOS Safari; reports show model load succeeding but generation hanging or refreshing on iPhone/iPad, while Android can work. The v5.4 architecture avoids that device-specific inference path.
+## Что изменено
 
-## Deploy
-1. Upload/replace the v5.4 files in the repository.
-2. Open GitHub → Actions → **Generate Kokoro audio** → **Run workflow**.
-3. Wait for the workflow to finish and commit the WAV files.
-4. GitHub Pages will then serve the generated audio.
+- 18 уроков и 72 фразы из текущего SpeakFlow.
+- Английская озвучка — Kokoro `af_heart`.
+- Kokoro/ONNX не запускается на iPhone.
+- iPhone только скачивает и проигрывает готовые WAV.
+- WAV кэшируются через Cache Storage.
+- `Listen` больше не использует системный iPhone TTS для английских фраз.
+- Русский перевод по кнопке может использовать системный TTS.
+- Shadowing / SpeechRecognition сохранены.
+- XP, streak, progress и localStorage сохранены.
+- GitHub Actions автоматически генерирует недостающие WAV-файлы.
 
-The first build downloads the Kokoro model on the GitHub runner and generates the lesson WAVs. After that, the iPhone only fetches static audio files, so playback should start much faster and work offline after caching.
+## Важно
+
+WAV-файлы не включены в этот ZIP: они бинарные и должны быть сгенерированы GitHub Actions.
+После загрузки пакета в репозиторий открой GitHub → Actions → `Generate all SpeakFlow Kokoro audio` → `Run workflow`.
+
+Workflow создаёт:
+`audio/airport-1.wav` ... `audio/everyday-english-4.wav`
+
+После успешного запуска GitHub Pages будет раздавать статические WAV-файлы вместе с приложением.

@@ -1,8 +1,46 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SpeakFlow">
-<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="assets/icon-180.png"><link rel="stylesheet" href="styles.css">
-<title>SpeakFlow v5.4 — Lisn-style English</title>
-</head><body><div id="app"><header class="topbar"><div><div class="eyebrow">SPEAKFLOW · V5.3</div><h1 id="greeting">Good morning 👋</h1></div><div class="streak">🔥 <span id="streak">1</span></div></header><main id="screen"></main><nav class="tabbar"><button data-tab="home" class="active">⌂<span>Home</span></button><button data-tab="learn">▣<span>Courses</span></button><button data-tab="practice">◉<span>Practice</span></button><button data-tab="progress">↗<span>Progress</span></button></nav></div><script type="module" src="tts.js?v=5.3"></script><script src="app.js?v=5.3"></script></body></html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="SpeakFlow — audio-first English speaking practice">
+<link rel="manifest" href="manifest.json">
+<title>SpeakFlow 6.0</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;color:#111827;background:#f5f7fb}
+*{box-sizing:border-box}body{margin:0;background:#f5f7fb}button,input{font:inherit}
+.app{max-width:760px;margin:auto;min-height:100vh;padding-bottom:90px}
+header{padding:20px 18px 10px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:24px;font-weight:800}.streak{background:#fff;border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px;font-weight:700}
+main{padding:0 16px}.hero{background:#111827;color:white;border-radius:24px;padding:24px;margin:8px 0 22px;box-shadow:0 12px 30px #00000018}.hero small{opacity:.7}.hero h2{font-size:28px;margin:10px 0}.hero p{opacity:.82;line-height:1.5}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:20px 2px 10px}.section-title h3{margin:0;font-size:18px}.muted{color:#6b7280;line-height:1.4}
+.card{background:white;border:1px solid #e5e7eb;border-radius:18px;padding:16px;margin:10px 0;box-shadow:0 4px 18px #00000008}
+.btn{border:0;border-radius:13px;padding:12px 15px;background:#eef0f5;color:#111827;font-weight:700;cursor:pointer;margin:6px 0}.btn-dark{background:#111827;color:#fff}.btn-light{background:#fff;color:#111827}.full{width:100%}.between{display:flex;justify-content:space-between}
+.progressbar{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:12px 0}.progressbar i{display:block;height:100%;background:#111827;border-radius:999px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px;text-align:center}.stat strong{display:block;font-size:23px;margin-bottom:5px}.stat span{font-size:12px;color:#6b7280}
+.chips{display:flex;gap:8px;overflow:auto;padding:3px 0 6px}.chip{border:1px solid #e5e7eb;border-radius:999px;padding:9px 13px;background:#fff;white-space:nowrap}.chip.selected{background:#111827;color:#fff;border-color:#111827}
+.course-card{width:100%;display:flex;align-items:center;gap:13px;text-align:left;cursor:pointer}.icon{font-size:30px;flex:none}.course-copy{display:flex;flex-direction:column;gap:3px;flex:1}.course-copy small{color:#6b7280}.course-copy span{color:#6b7280;font-size:13px}
+.lesson-head{display:flex;justify-content:space-between;align-items:center;margin:8px 0 12px}.back{border:0;background:none;padding:8px 0;font-weight:700;cursor:pointer}.lesson-card{padding:22px}.phrase{font-size:29px;font-weight:800;line-height:1.25;margin:25px 0 14px}.translation{font-size:17px;color:#6b7280;line-height:1.5}.audio-row{display:flex;gap:8px;margin-top:18px}.audio-row .btn{flex:1}.lesson-card hr{border:0;border-top:1px solid #e5e7eb;margin:25px 0}.shadow{text-align:center}.bigmic{width:78px;height:78px;border-radius:50%;border:0;background:#111827;color:white;font-size:30px;margin:15px}.feedback{min-height:40px;color:#6b7280}.ok{color:#16a34a}.notice{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px;margin:14px 0;color:#4b5563;line-height:1.5}.done{text-align:center;padding:40px 20px}.trophy{font-size:60px}.chat{display:flex;flex-direction:column;gap:10px}.bubble{background:#f0f2f6;border-radius:16px;padding:12px;max-width:90%;line-height:1.45}.bubble.me{align-self:flex-end;background:#111827;color:#fff}.inputrow{display:flex;gap:8px;margin-top:15px}.inputrow input{flex:1;border:1px solid #d1d5db;border-radius:12px;padding:12px}
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;display:flex;justify-content:center;z-index:5;padding:8px env(safe-area-inset-right) calc(8px + env(safe-area-inset-bottom)) env(safe-area-inset-left)}.tabbar button{border:0;background:none;padding:7px 14px;color:#6b7280;font-size:12px}.tabbar button.active{color:#111827;font-weight:800}
+@media(max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}.phrase{font-size:25px}.app{padding-bottom:88px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="logo">SpeakFlow <span style="font-size:13px;color:#6b7280">6.0</span></div><div class="streak">🔥 <span id="streak">1</span></div></header>
+<main id="screen"></main>
+</div>
+<nav class="tabbar">
+<button data-tab="home">⌂<br>Home</button>
+<button data-tab="learn">▣<br>Learn</button>
+<button data-tab="practice">🎧<br>Practice</button>
+<button data-tab="progress">◔<br>Progress</button>
+</nav>
+<script src="app.js"></script>
+<script src="tts.js"></script>
+<script>document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='home'));</script>
+</body>
+</html>
