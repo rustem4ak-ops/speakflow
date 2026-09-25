@@ -1,7 +1,12 @@
-name: Generate Kokoro audio
+name: Generate all SpeakFlow Kokoro audio
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "data.json"
+      - "tools_generate_audio.py"
+      - ".github/workflows/generate-audio.yml"
 
 permissions:
   contents: write
@@ -9,6 +14,7 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repository
@@ -19,53 +25,36 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install system audio dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y espeak-ng
+
       - name: Install Kokoro
         run: |
           python -m pip install --upgrade pip
-          pip install "kokoro>=0.9.4" soundfile
+          pip install "kokoro>=0.9.4" soundfile numpy
 
-      - name: Generate audio
+      - name: Remove old audio
         run: |
+          rm -f audio/*.wav
+          rm -f audio/index.json
           mkdir -p audio
 
-          python - <<'PY'
-          from kokoro import KPipeline
-          import soundfile as sf
-          from pathlib import Path
+      - name: Generate all lesson audio
+        run: |
+          python tools_generate_audio.py
 
-          pipeline = KPipeline(lang_code="a")
-
-          phrases = {
-              "airport-1": "Hello, where is the check-in counter?",
-              "airport-2": "I'd like to check in for my flight.",
-              "airport-3": "Can I have a window seat, please?",
-              "airport-4": "Where is the security checkpoint?",
-              "airport-5": "What time does boarding start?"
-          }
-
-          out = Path("audio")
-
-          for name, text in phrases.items():
-              path = out / f"{name}.wav"
-
-              if path.exists():
-                  print(f"Already exists: {path}")
-                  continue
-
-              print(f"Generating: {text}")
-
-              generator = pipeline(
-                  text,
-                  voice="af_heart",
-                  speed=1.0
-              )
-
-              for _, _, audio in generator:
-                  sf.write(path, audio, 24000)
-                  break
-
-              print(f"Saved: {path}")
-          PY
+      - name: Check generated audio
+        run: |
+          echo "WAV files:"
+          find audio -name "*.wav" | sort
+          echo ""
+          echo "Number of WAV files:"
+          find audio -name "*.wav" | wc -l
+          echo ""
+          echo "Audio index:"
+          ls -lh audio/index.json
 
       - name: Commit generated audio
         run: |
@@ -75,8 +64,8 @@ jobs:
           git add audio/
 
           if git diff --cached --quiet; then
-            echo "No new audio files."
+            echo "No audio changes."
           else
-            git commit -m "Generate Kokoro lesson audio"
+            git commit -m "Generate exact SpeakFlow 6.2 audio"
             git push
           fi
