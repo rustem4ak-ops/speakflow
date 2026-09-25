@@ -93,6 +93,8 @@ const courses = [
     ['That sounds good to me.','Меня это устраивает.'] ]}
 ];
 
+window.__speakflowCourses = courses;
+
 let state=JSON.parse(localStorage.getItem('speakflow-v5')||'{"tab":"home","level":"A2","streak":1,"completed":[],"minutes":0,"xp":0,"daily":0}');
 const save=()=>localStorage.setItem('speakflow-v5',JSON.stringify(state));
 const screen=document.getElementById('screen');
@@ -128,7 +130,7 @@ function learn(){
 }
 function setLevel(level){state.level=level;save();learn();}
 function courseCard(l){return `<div class="card" onclick="openLesson(${l.id})"><div class="lesson-row"><div class="icon">${l.icon}</div><div style="flex:1"><h4>${l.title}</h4><div class="muted">${l.level} · ${l.time} · ${l.topic}</div><div class="muted" style="margin-top:5px">${l.desc}</div></div><b>›</b></div></div>`}
-function voiceStatusText(){const v=window.voiceEngine||{};if(v.state==='ready')return '🧠 US English voice ready';if(v.state==='loading')return `⏳ Loading voice${v.progress?` · ${v.progress}%`:''}`;if(v.state==='synthesizing')return '🧠 Preparing lesson audio…';if(v.state==='error')return `⚠️ Voice error: ${v.error||'check connection'}`;return '🧠 Kokoro US English neural voice';}
+function voiceStatusText(){const v=window.voiceEngine||{};if(v.state==='ready')return '🧠 US English voice ready';if(v.state==='loading')return `⏳ Loading voice${v.progress?` · ${v.progress}%`:''}`;if(v.state==='synthesizing')return '🧠 Kokoro audio readying…';if(v.state==='error')return `⚠️ Voice error: ${v.error||'check connection'}`;return '🧠 Kokoro US English neural voice';}
 function updateVoiceStatus(){const el=document.getElementById('voiceStatus');if(el)el.textContent=voiceStatusText();}
 window.addEventListener('speakflow-voice-status',updateVoiceStatus);
 async function prepareCourseAudio(id){const c=courses.find(x=>x.id===id);if(!c)return;const btn=document.getElementById('prepareBtn');if(btn){btn.disabled=true;btn.textContent='Preparing audio…'}for(let i=0;i<c.phrases.length;i++){const p=c.phrases[i];if(btn)btn.textContent=`Preparing ${i+1}/${c.phrases.length}…`;await window.neuralSpeak(p[0],{cacheOnly:true});}if(btn){btn.disabled=false;btn.textContent='✓ Lesson audio ready'}}
@@ -137,7 +139,7 @@ function practice(){screen.innerHTML=`<div class="section-title"><h3>Practice</h
 <div class="card"><div class="lesson-row"><div class="icon">🎧</div><div><h4>Audio-first practice</h4><div class="muted">Generate lesson audio once, cache it, then replay it quickly and offline.</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick="openLesson(1)">Open a lesson</button></div>
 <div class="card"><div class="lesson-row"><div class="icon">🔁</div><div><h4>Shadowing</h4><div class="muted">Listen to the same speaker, then repeat immediately.</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick="openLesson(5)">Start shadowing</button></div>
 <div class="card"><div class="lesson-row"><div class="icon">🤖</div><div><h4>AI tutor demo</h4><div class="muted">Practice the phrases from the lesson in a simple conversation.</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick="chatDemo()">Open conversation</button></div>
-<div class="notice"><b>Version 5.3:</b> Kokoro US English runs in a worker. Lesson phrases are pre-generated one by one and cached, so after the first preparation, Listen starts almost immediately.</div>`;}
+<div class="notice"><b>Version 5.4:</b> Kokoro US English runs in a worker. Lesson phrases are pre-generated one by one and cached, so after the first preparation, Listen starts almost immediately.</div>`;}
 function progress(){const pct=Math.round(state.completed.length/courses.length*100);screen.innerHTML=`<div class="section-title"><h3>Progress</h3></div><div class="grid"><div class="stat"><strong>${state.xp}</strong><span class="muted">XP</span></div><div class="stat"><strong>${state.minutes}</strong><span class="muted">Minutes</span></div><div class="stat"><strong>${state.completed.length}</strong><span class="muted">Lessons</span></div><div class="stat"><strong>🔥 ${state.streak}</strong><span class="muted">Day streak</span></div></div><div class="section-title"><h3>Course completion</h3></div><div class="card"><b>A1–C1 SpeakFlow plan</b><div class="progressbar" style="margin:12px 0 7px"><i style="width:${pct}%"></i></div><span class="muted">${pct}% complete</span></div><div class="section-title"><h3>Method</h3></div><div class="notice">Listen to complete phrases in context, repeat aloud, shadow the speaker, then use the phrases in conversation.</div>`;}
 
 window.currentPhrase=0;
