@@ -1,13 +1,1 @@
-{
-  "name": "SpeakFlow English",
-  "short_name": "SpeakFlow",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#f6f7fb",
-  "theme_color": "#111827",
-  "description": "Free English speaking practice app.",
-  "icons": [
-    {"src":"assets/icon-192.png","sizes":"192x192","type":"image/png"},
-    {"src":"assets/icon-512.png","sizes":"512x512","type":"image/png"}
-  ]
-}
+{"name":"SpeakFlow v5 — Lisn-style English","short_name":"SpeakFlow","start_url":"./","display":"standalone","background_color":"#f6f7fb","theme_color":"#111827","description":"Free audio-first English learning PWA with shadowing and offline lesson audio.","icons":[{"src":"assets/icon-180.png","sizes":"180x180","type":"image/png","purpose":"any maskable"}]}
