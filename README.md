@@ -1,4 +1,4 @@
-# SpeakFlow v3 — Neural English Voice
+# SpeakFlow v4 — Neural English Voice
 
 Free PWA prototype for iPhone. English lesson audio now uses client-side neural TTS (Piper Plus + ONNX Runtime Web), not iPhone SpeechSynthesis.
 
@@ -13,3 +13,7 @@ The neural engine is based on Piper Plus, which provides browser WebAssembly inf
 
 ## GitHub Pages
 Upload/replace these files in your existing `rustem4ak-ops/speakflow` repository and keep GitHub Pages set to `main` / root.
+
+
+## v4 fix
+The browser import map explicitly resolves piper-plus and @piper-plus/g2p, so the neural TTS module loads correctly on static GitHub Pages without a bundler. The app no longer starts downloading the model until the user presses Load / prepare voice.

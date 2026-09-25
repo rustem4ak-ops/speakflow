@@ -73,5 +73,5 @@ window.stopNeuralVoice = () => {
   activeAudio = null;
 };
 
-// Start downloading in the background so the first lesson opens faster.
-getEngine().catch(() => {});
+// Do not download automatically. The user starts the model download with the button.
+

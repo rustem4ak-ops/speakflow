@@ -55,7 +55,7 @@ function voiceStatusText(){
  if(v.state==="ready") return "🧠 Neural English voice ready";
  if(v.state==="loading") return `⏳ Loading neural voice${v.progress?` · ${v.progress}%`:"…"}`;
  if(v.state==="synthesizing") return "🧠 Generating natural English…";
- if(v.state==="error") return "⚠️ Device voice fallback";
+ if(v.state==="error") return `⚠️ Neural voice error: ${v.error||"check connection"}`;
  return "🧠 Neural English voice";
 }
 function updateVoiceStatus(){
@@ -69,7 +69,7 @@ function practice(){
  <div class="card voice-card"><div class="lesson-row"><div class="icon">🧠</div><div style="flex:1"><h4>Neural English voice</h4><div class="muted" id="voiceStatus">${voiceStatusText()}</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick='prepareNeuralVoice()'>Load / prepare voice</button><button class="btn" style="margin-top:8px;width:100%" onclick='speakEnglish("Hello! Welcome to SpeakFlow. Lets practice English together.")'>▶ Test natural English</button></div>
  <div class="card"><div class="lesson-row"><div class="icon">🗣️</div><div><h4>Shadowing</h4><div class="muted">Listen to the neural voice and repeat useful phrases.</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick="openLesson(1)">Start speaking</button></div>
  <div class="card"><div class="lesson-row"><div class="icon">🤖</div><div><h4>AI conversation demo</h4><div class="muted">Practice a real-life conversation without an API.</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick="chatDemo()">Open conversation</button></div>
- <div class="notice"><b>Что изменилось в v3:</b> уроки больше не используют голос iPhone для английских фраз. SpeakFlow загружает нейросетевой голос Piper Plus прямо в браузер и синтезирует речь на устройстве. API-ключ не нужен. Первый запуск скачивает модель примерно на 40 МБ и кеширует её в браузере; после этого повторная загрузка обычно не требуется. Если нейросетевой движок недоступен, приложение временно использует голос устройства.</div>`;
+ <div class="notice"><b>Что изменилось в v3:</b> уроки больше не используют голос iPhone для английских фраз. SpeakFlow загружает нейросетевой голос Piper Plus прямо в браузер и синтезирует речь на устройстве. API-ключ не нужен. Первый запуск скачивает модель примерно на 80 МБ и кеширует её в браузере; после этого повторная загрузка обычно не требуется. Если нейросетевой движок недоступен, приложение временно использует голос устройства.</div>`;
  updateVoiceStatus();
 }
 function progress(){
