@@ -27,3 +27,7 @@ Piper `en_US` checkpoint is not a piper-plus-specific checkpoint.
 SpeakFlow now uses `kokoro-js` with the `onnx-community/Kokoro-82M-v1.0-ONNX` model,
 American English voice `af_heart`, and a quantized (`q8`) browser runtime. Audio is
 generated locally in the browser and cached as WAV for repeat playback.
+
+
+### v5.2 voice fix
+The browser TTS uses the self-contained `kokoro-js-jp` CDN build with Japanese support disabled. This avoids loading OpenJTalk for English-only lessons.

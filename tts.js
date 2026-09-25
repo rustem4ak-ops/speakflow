@@ -1,9 +1,8 @@
-import { KokoroTTS } from 'kokoro-js';
+import { KokoroJP } from 'https://cdn.jsdelivr.net/npm/kokoro-js-jp@0.2.0/dist/kokoro-jp.web.js';
 
 // Kokoro is an English-focused neural TTS model that runs locally in the browser.
 // We use the quantized browser model for a reasonable first download size while
 // keeping a natural American English voice.
-const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 const VOICE = 'af_heart';
 const CACHE_NAME = 'speakflow-audio-v5-kokoro';
 
@@ -49,7 +48,7 @@ async function putCached(text, wav) {
   if (!c) return;
   await c.put(
     cacheKey(text),
-    new Response(new Blob([wav], { type: 'audio/wav' }), {
+    new Response(wav, {
       headers: {
         'Content-Type': 'audio/wav',
         'Cache-Control': 'public, max-age=31536000'
@@ -62,18 +61,7 @@ async function getEngine() {
   if (!enginePromise) {
     setStatus('loading', 'Downloading Kokoro English voice…', 0);
 
-    enginePromise = KokoroTTS.from_pretrained(MODEL_ID, {
-      dtype: 'q8',
-      device: 'wasm',
-      progress_callback: (p) => {
-        const raw = typeof p?.progress === 'number' ? p.progress : 0;
-        setStatus(
-          'loading',
-          p?.status || 'Loading Kokoro voice…',
-          Math.round(raw)
-        );
-      }
-    }).then(engine => {
+    enginePromise = KokoroJP.load({ japanese: false }).then(engine => {
       setStatus('ready', 'Kokoro US English voice ready', 100);
       return engine;
     }).catch(err => {
@@ -123,11 +111,9 @@ window.neuralSpeak = async function(text, opts = {}) {
     const tts = await getEngine();
     if (!tts) return false;
 
-    const result = await tts.generate(text, {
-      voice: VOICE
-    });
+    const result = await tts.speak(text, VOICE);
 
-    const wav = result.toWav();
+    const wav = await result.toBlob();
     await putCached(text, wav);
 
     if (opts.cacheOnly) {
@@ -140,7 +126,7 @@ window.neuralSpeak = async function(text, opts = {}) {
       activeAudio = null;
     }
 
-    const url = URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
+    const url = URL.createObjectURL(wav);
     activeAudio = new Audio(url);
     activeAudio.onended = () => {
       URL.revokeObjectURL(url);
