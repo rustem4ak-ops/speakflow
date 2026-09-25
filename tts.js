@@ -37,12 +37,45 @@ async function fetchAndCache(url) {
 
 async function buildAudioIndex() {
   if (window.__speakflowAudioIndex) return window.__speakflowAudioIndex;
+
   const index = new Map();
-  // The app exposes courses; map exact phrase text to its static WAV path.
+
+  const audioNames = {
+    1: 'airport',
+    2: 'hotel',
+    3: 'restaurant',
+    4: 'shopping',
+    5: 'small-talk',
+    6: 'job-interview',
+    7: 'work',
+    8: 'doctor',
+    9: 'pharmacy',
+    10: 'taxi-transport',
+    11: 'renting-apartment',
+    12: 'phone-calls',
+    13: 'customer-service',
+    14: 'making-friends',
+    15: 'travel-conversations',
+    16: 'study-university',
+    17: 'professional-english',
+    18: 'everyday-english'
+  };
+
   if (Array.isArray(window.__speakflowCourses)) {
     for (const c of window.__speakflowCourses) {
-      c.phrases.forEach((p, i) => index.set(p[0], `audio/${c.id}-${i}.wav`));
+      const folderName = audioNames[c.id];
+
+      if (!folderName) continue;
+
+      c.phrases.forEach((p, i) => {
+        index.set(p[0], `audio/${folderName}-${i + 1}.wav`);
+      });
     }
+  }
+
+  window.__speakflowAudioIndex = index;
+  return index;
+}
   }
   window.__speakflowAudioIndex = index;
   return index;
