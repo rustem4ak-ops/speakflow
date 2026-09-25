@@ -50,11 +50,27 @@ function learn(){
  <div class="chips"><span class="chip">A1</span><span class="chip">A2</span><span class="chip">B1</span><span class="chip">B2</span></div>
  ${lessons.map(l=>`<div class="card" onclick="openLesson(${l.id})"><div class="lesson-row"><div class="icon">${l.icon}</div><div style="flex:1"><h4>${l.title}</h4><div class="muted">${l.level} · ${l.time} · ${l.topic}</div></div><b>›</b></div></div>`).join("")}`;
 }
+function voiceStatusText(){
+ const v=window.voiceEngine||{};
+ if(v.state==="ready") return "🧠 Neural English voice ready";
+ if(v.state==="loading") return `⏳ Loading neural voice${v.progress?` · ${v.progress}%`:"…"}`;
+ if(v.state==="synthesizing") return "🧠 Generating natural English…";
+ if(v.state==="error") return "⚠️ Device voice fallback";
+ return "🧠 Neural English voice";
+}
+function updateVoiceStatus(){
+ const el=document.getElementById("voiceStatus");
+ if(el) el.textContent=voiceStatusText();
+}
+window.addEventListener("speakflow-voice-status",updateVoiceStatus);
+
 function practice(){
  screen.innerHTML=`<div class="section-title"><h3>Practice</h3></div>
- <div class="card"><div class="lesson-row"><div class="icon">🗣️</div><div><h4>Shadowing</h4><div class="muted">Listen and repeat useful phrases.</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick="openLesson(1)">Start speaking</button></div>
+ <div class="card voice-card"><div class="lesson-row"><div class="icon">🧠</div><div style="flex:1"><h4>Neural English voice</h4><div class="muted" id="voiceStatus">${voiceStatusText()}</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick='prepareNeuralVoice()'>Load / prepare voice</button><button class="btn" style="margin-top:8px;width:100%" onclick='speakEnglish("Hello! Welcome to SpeakFlow. Lets practice English together.")'>▶ Test natural English</button></div>
+ <div class="card"><div class="lesson-row"><div class="icon">🗣️</div><div><h4>Shadowing</h4><div class="muted">Listen to the neural voice and repeat useful phrases.</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick="openLesson(1)">Start speaking</button></div>
  <div class="card"><div class="lesson-row"><div class="icon">🤖</div><div><h4>AI conversation demo</h4><div class="muted">Practice a real-life conversation without an API.</div></div></div><button class="btn btn-dark" style="margin-top:14px;width:100%" onclick="chatDemo()">Open conversation</button></div>
- <div class="notice">Free version: speech recognition uses your browser/iPhone when available. No paid AI service is required for this prototype.</div>`;
+ <div class="notice"><b>Что изменилось в v3:</b> уроки больше не используют голос iPhone для английских фраз. SpeakFlow загружает нейросетевой голос Piper Plus прямо в браузер и синтезирует речь на устройстве. API-ключ не нужен. Первый запуск скачивает модель примерно на 40 МБ и кеширует её в браузере; после этого повторная загрузка обычно не требуется. Если нейросетевой движок недоступен, приложение временно использует голос устройства.</div>`;
+ updateVoiceStatus();
 }
 function progress(){
  const pct=Math.round(state.completed.length/lessons.length*100);
@@ -69,7 +85,7 @@ function openLesson(id){
   const p=l.phrases[i];
   screen.innerHTML=`<div class="lesson-head"><button class="back" onclick="setTab('learn')">← Back</button><span class="muted">${i+1}/${l.phrases.length}</span></div>
   <div class="card"><span class="chip">${l.level} · ${l.topic}</span><div class="phrase">${p[0]}</div><div class="translation">${p[1]}</div>
-  <div class="audio"><button class="btn btn-dark" onclick='speak(${JSON.stringify(p[0])})'>🔊 Listen</button><button class="btn" onclick='speak(${JSON.stringify(p[1])})'>🇷🇺 Translate</button></div>
+  <div class="audio"><button class="btn btn-dark" onclick='speakEnglish(${JSON.stringify(p[0])})'>🧠 Natural English</button><button class="btn" onclick='speak(${JSON.stringify(p[1])},"ru-RU")'>🇷🇺 Перевод</button></div>
   <hr style="border:0;border-top:1px solid #eee;margin:24px 0">
   <div style="text-align:center"><b>Now repeat</b><button class="bigmic" id="mic">🎙️</button><div class="feedback" id="feedback">Tap the microphone and say the phrase.</div></div></div>
   <button class="btn btn-dark" style="width:100%" id="next">${i===l.phrases.length-1?"Finish lesson":"Next phrase →"}</button>`;
@@ -89,7 +105,36 @@ function openLesson(id){
  draw();
 }
 function finishLesson(id){if(!state.completed.includes(id))state.completed.push(id);state.xp+=50;state.minutes+=10;save();screen.innerHTML=`<div class="card" style="text-align:center;padding:40px 20px"><div style="font-size:60px">🎉</div><h2>Lesson complete!</h2><p class="muted">+50 XP · +10 minutes</p><button class="btn btn-dark" onclick="setTab('home')">Continue</button></div>`}
-function speak(text){if("speechSynthesis" in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=.88;speechSynthesis.speak(u)}}
+let cachedVoices=[];
+function loadVoices(){
+  if(!("speechSynthesis" in window)) return;
+  const refresh=()=>{cachedVoices=speechSynthesis.getVoices()||[]};
+  refresh();
+  if(speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged",refresh);
+}
+loadVoices();
+function pickVoice(lang){
+  const voices=(cachedVoices.length?speechSynthesis.getVoices():cachedVoices)||[];
+  const exact=voices.filter(v=>v.lang && v.lang.toLowerCase()===lang.toLowerCase());
+  const same=voices.filter(v=>v.lang && v.lang.toLowerCase().startsWith(lang.slice(0,2).toLowerCase()));
+  return exact[0] || same[0] || null;
+}
+function speak(text, lang="en-US"){
+  if(!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=lang;
+  u.rate=lang.startsWith("en") ? .92 : .95;
+  u.pitch=1;
+  const voice=pickVoice(lang);
+  if(voice) u.voice=voice;
+  speechSynthesis.speak(u);
+}
+async function speakEnglish(text){
+  if(window.stopNeuralVoice) window.stopNeuralVoice();
+  const ok=await (window.neuralSpeak ? window.neuralSpeak(text) : Promise.resolve(false));
+  if(!ok) speak(text,"en-US");
+}
 function chatDemo(){
  screen.innerHTML=`<div class="lesson-head"><button class="back" onclick="setTab('practice')">← Back</button><b>Airport English</b></div><div class="card"><div class="chat" id="chat"><div class="bubble">Hi! Welcome to the airport. How can I help you?</div></div><div class="inputrow"><input id="msg" placeholder="Type your answer…"><button class="btn btn-dark" onclick="sendMsg()">Send</button></div></div><div class="notice">This is an offline conversation demo. A real AI teacher can be connected later without changing the interface.</div>`;
 }

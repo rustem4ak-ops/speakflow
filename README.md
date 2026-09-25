@@ -1,36 +1,15 @@
-# SpeakFlow — free iPhone English-learning PWA
+# SpeakFlow v3 — Neural English Voice
 
-This is a 100% free prototype that can be hosted on GitHub Pages and installed on an iPhone from Safari using **Share → Add to Home Screen**.
+Free PWA prototype for iPhone. English lesson audio now uses client-side neural TTS (Piper Plus + ONNX Runtime Web), not iPhone SpeechSynthesis.
 
-## What is included
+## Voice architecture
+- Neural English synthesis runs in the browser.
+- No API key and no paid TTS service.
+- The model is downloaded from Hugging Face on first use and cached in IndexedDB by the TTS library.
+- If the neural engine cannot load, the app falls back to the device English voice.
+- Russian translations still use the device Russian voice.
 
-- Home dashboard
-- 4 starter lessons
-- A1/A2/B1 labels
-- phrase learning
-- browser text-to-speech
-- browser speech recognition when supported
-- shadowing-style practice
-- offline demo conversation
-- progress, XP and streak stored locally
-- PWA manifest
-
-## Important
-
-This version intentionally has no paid AI API, no paid database and no App Store requirement.
-
-For a truly native iOS App Store app, Apple Developer membership and a macOS build/signing environment are normally required. This PWA route avoids those costs.
+The neural engine is based on Piper Plus, which provides browser WebAssembly inference and supports Safari 18+ with WebGPU or WASM fallback. The app uses the multilingual medium model from the project's demo space.
 
 ## GitHub Pages
-
-1. Create a GitHub repository, e.g. `speakflow`.
-2. Upload all files from this folder.
-3. Go to Settings → Pages.
-4. Under Build and deployment choose **Deploy from a branch**.
-5. Select `main` and `/ (root)`.
-6. Save.
-7. GitHub will show your public URL.
-8. Open that URL in Safari on iPhone.
-9. Share → Add to Home Screen → Add.
-
-Do not change file names unless you also update the references in `index.html` and `manifest.json`.
+Upload/replace these files in your existing `rustem4ak-ops/speakflow` repository and keep GitHub Pages set to `main` / root.
