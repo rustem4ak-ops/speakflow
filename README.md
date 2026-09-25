@@ -1,4 +1,4 @@
-# SpeakFlow 6.0
+# SpeakFlow 6.1
 
 Готовая статическая PWA-версия SpeakFlow.
 
@@ -24,3 +24,10 @@ Workflow создаёт:
 `audio/airport-1.wav` ... `audio/everyday-english-4.wav`
 
 После успешного запуска GitHub Pages будет раздавать статические WAV-файлы вместе с приложением.
+
+
+## Audio synchronization fix in 6.1
+
+The 6.1 package intentionally regenerates every WAV file from the current `data.json`.
+It also uses a new browser cache version and a URL version (`v=6.1`) so old audio from
+SpeakFlow 6.0 cannot be reused after deployment.

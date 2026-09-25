@@ -1,6 +1,6 @@
 // SpeakFlow 6.0 — static Kokoro audio player.
 // No Kokoro/ONNX inference runs in Safari. iPhone only downloads and plays WAV files.
-const CACHE_NAME = 'speakflow-audio-v6';
+const CACHE_NAME = 'speakflow-audio-v6.1';
 let activeAudio = null;
 let preloadJobs = new Map();
 
@@ -26,7 +26,7 @@ async function buildAudioIndex(){
   if(window.__speakflowAudioIndex)return window.__speakflowAudioIndex;
   const index=new Map();
   for(const c of (window.__speakflowCourses||[])){
-    c.phrases.forEach((p,i)=>index.set(p[0],`audio/${c.slug}-${i+1}.wav`));
+    c.phrases.forEach((p,i)=>index.set(p[0],`audio/${c.slug}-${i+1}.wav?v=6.1`));
   }
   window.__speakflowAudioIndex=index; return index;
 }

@@ -3,10 +3,14 @@ from pathlib import Path
 import soundfile as sf
 from kokoro import KPipeline
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parent
 DATA = json.loads((ROOT / "data.json").read_text(encoding="utf-8"))
 OUT = ROOT / "audio"
 OUT.mkdir(exist_ok=True)
+
+# Always regenerate every WAV so audio can never remain from an older phrase set.
+for old_wav in OUT.glob("*.wav"):
+    old_wav.unlink()
 
 pipeline = KPipeline(lang_code="a")
 VOICE = "af_heart"
