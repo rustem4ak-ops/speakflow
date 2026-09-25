@@ -1,4 +1,4 @@
-# SpeakFlow 6.1
+# SpeakFlow 6.2
 
 Готовая статическая PWA-версия SpeakFlow.
 
@@ -31,3 +31,7 @@ Workflow создаёт:
 The 6.1 package intentionally regenerates every WAV file from the current `data.json`.
 It also uses a new browser cache version and a URL version (`v=6.1`) so old audio from
 SpeakFlow 6.0 cannot be reused after deployment.
+
+
+## 6.2 exact-phrase audio mapping
+Audio filenames are derived from the SHA-256 hash of the exact English phrase. The player reads `audio/index.json`, so lesson order changes can never cause one phrase to play another phrase's audio.
