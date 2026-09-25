@@ -1,33 +1,22 @@
-# SpeakFlow v5.1 — Lisn-style English with Kokoro neural voice
+# SpeakFlow v5.3
 
-Free PWA prototype inspired by the audio-first learning approach: listen to complete phrases, repeat, shadow, then practice them in conversation.
+Lisn-style free PWA for English practice.
 
-## v5 changes
-- 18 themed courses across A1–C1.
-- Learning plan by level.
-- Audio-first lesson flow.
-- One-speaker US English neural TTS using Piper Plus + ONNX Runtime Web.
-- **Option B UX:** each lesson phrase is synthesized once and saved as WAV in the browser Cache Storage; later playback reuses the saved audio instead of synthesizing again.
-- “Prepare lesson audio” pre-generates every phrase in the current lesson.
-- No API key or server required.
-- Progress, XP and streak remain local to the device.
+## Voice
+- Kokoro-82M `af_heart` US English neural voice.
+- English audio stays neural; no Apple system TTS fallback for English lessons.
+- Kokoro runs in a Web Worker so Safari UI is not blocked by model inference.
+- First voice load includes a short warm-up.
 
-## Important
-The app uses an open neural voice, not Lisn's proprietary recordings. It aims for a consistent US-English voice, but it is not a claim of being the same voice or recording system as Lisn.
+## Fast lesson playback
+- Lesson audio is generated phrase-by-phrase, not as one large lesson WAV.
+- The lesson automatically prefetches phrases in the background.
+- Each generated phrase is cached locally as WAV.
+- Replays use the cached WAV immediately.
+- Only one phrase is synthesized at a time to reduce iPhone memory pressure.
 
-The model is downloaded from Hugging Face on first use and browser-cached.
+## iPhone
+If Safari cannot complete the neural model load, the app now reports a concrete worker error/timeout instead of appearing to hang forever.
 
-
-## v5.1 voice engine
-
-The browser TTS backend was changed from Piper Plus to **Kokoro-82M** because the previous
-Piper setup was failing during G2P initialization (`openjtalkModule` error) and the upstream
-Piper `en_US` checkpoint is not a piper-plus-specific checkpoint.
-
-SpeakFlow now uses `kokoro-js` with the `onnx-community/Kokoro-82M-v1.0-ONNX` model,
-American English voice `af_heart`, and a quantized (`q8`) browser runtime. Audio is
-generated locally in the browser and cached as WAV for repeat playback.
-
-
-### v5.2 voice fix
-The browser TTS uses the self-contained `kokoro-js-jp` CDN build with Japanese support disabled. This avoids loading OpenJTalk for English-only lessons.
+## Deployment
+Upload the files in this folder to the GitHub Pages repository and replace the previous version.
