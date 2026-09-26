@@ -84,32 +84,6 @@ function setAudio(text,autoplay=true){
  if(autoplay){const q=p.play();if(q&&q.catch)q.catch(()=>{if(st)st.textContent="Нажмите ▶ Play на плеере."})}
 }
 
-let voices=[];
-function loadVoices(){voices=window.speechSynthesis?window.speechSynthesis.getVoices():[]}
-if("speechSynthesis" in window){
-  loadVoices();
-  window.speechSynthesis.onvoiceschanged=loadVoices;
-}
-function speakEnglish(text,accentOverride){
-  if(!("speechSynthesis" in window)){
-    setAudio(text,true);
-    return;
-  }
-  const accent=accentOverride||store.accent;
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang=accent==="US"?"en-US":"en-GB";
-  u.rate=0.95;
-  u.pitch=1;
-  const wanted=accent==="US"?["en-US","en_US"]:["en-GB","en_GB"];
-  let v=voices.find(x=>wanted.includes(x.lang));
-  if(!v && accent==="UK")v=voices.find(x=>x.lang&&x.lang.toLowerCase().startsWith("en-gb"));
-  if(!v && accent==="US")v=voices.find(x=>x.lang&&x.lang.toLowerCase().startsWith("en-us"));
-  if(v)u.voice=v;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
-  const st=document.getElementById("audioStatus");
-  if(st)st.textContent=(v?"English voice: "+v.name:"English voice selected by phone");
-}
 
 function nav(){
  const items=[["today","☀️","Сегодня"],["learn","📚","Учиться"],["speak","🎙️","Говорить"],["english","🧠","Мой English"]];
@@ -166,8 +140,7 @@ function renderLesson(i,isReview=false){
  '<div class="miniMeter"><i style="width:'+progress+'%"></i></div>'+
  '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>'+
  '<audio id="lessonPlayer" preload="auto" hidden></audio>'+
- '<div class="voiceChoices"><button class="voiceChoice primaryVoice" onclick="lessonListen(\''+jsq(text)+'\')">🔊 <span>Основное</span></button><button class="voiceChoice" onclick="lessonListenBritish(\''+jsq(text)+'\')">🇬🇧 <span>British</span></button></div>'+
- '<div class="lessonListenHint">Сравни обычное звучание и британский английский</div>'+
+ '<div class="voiceChoices"><button class="voiceChoice primaryVoice" onclick="lessonListen(\''+jsq(text)+'\')">🔊 <span>Послушать</span></button></div>'+
  '<div id="lessonSpeech" class="lessonResult">'+(lessonFinished?doneText:lessonMicMarkup(text))+'</div>'+
  '<button class="nextLessonBtn" onclick="nextLesson()"'+nextDisabled+'>Следующий урок <span>→</span><small>'+esc(nextName)+'</small></button>'+
  '</div>';
@@ -182,43 +155,59 @@ function lessonListen(text){
    if(b&&!lessonFinished)b.innerHTML=lessonMicMarkup(text);
  },900);
 }
-function lessonListenBritish(text){
- const box=document.getElementById("lessonSpeech");
- const hasBritish=voices.some(v=>v.lang&&v.lang.toLowerCase().startsWith("en-gb"));
- if(!hasBritish){
-   if(box)box.innerHTML='<span class="warning">🇬🇧 Британский голос не найден на этом телефоне.</span><div class="small resultHint">Основное аудио остаётся доступным.</div>'+lessonMicMarkup(text);
-   return;
- }
- if(box)box.innerHTML='<span class="listeningPulse">🇬🇧 British English…</span>';
- speakEnglish(text,"UK");
- setTimeout(()=>{
-   const b=document.getElementById("lessonSpeech");
-   if(b&&!lessonFinished)b.innerHTML=lessonMicMarkup(text);
- },900);
-}
+
 function lessonMicMarkup(text){ return '<button class="lessonMic" onclick="lessonSpeak(lessonTarget)" aria-label="Произнести фразу">🎙️</button><div class="lessonMicText">Теперь нажми микрофон и произнеси фразу</div>';
 }
-function lessonSpeak(target){
+async function lessonSpeak(target){
  const box=document.getElementById("lessonSpeech");
+ if(!box)return;
+
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!SR){
-   box.innerHTML='<span class="warning">Распознавание речи недоступно. Разреши микрофон в браузере.</span>';
+   box.innerHTML='<span class="warning">Этот браузер не поддерживает распознавание речи. На iPhone открой SpeakFlow именно в Safari.</span>';
    return;
  }
+
+ box.innerHTML='<span class="listeningPulse">🎙️ Разрешаем микрофон…</span>';
+
+ // iPhone/iPad Safari: explicitly request microphone permission from the user gesture
+ // before starting WebKit speech recognition.
+ let permissionStream=null;
+ try{
+   if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+     permissionStream=await navigator.mediaDevices.getUserMedia({audio:true});
+     permissionStream.getTracks().forEach(t=>t.stop());
+   }
+ }catch(e){
+   box.innerHTML='<span class="warning">Микрофон заблокирован. Разреши доступ к микрофону для Safari: Настройки → Safari → Микрофон.</span><div class="small resultHint">После разрешения вернись сюда и нажми микрофон ещё раз.</div>'+lessonMicMarkup(target);
+   return;
+ }
+
  const r=new SR();
- r.lang=store.accent==="UK"?"en-GB":"en-US";
- r.interimResults=false;r.maxAlternatives=1;
+ // English recognition is more reliable across iOS Safari when explicitly set to en-US.
+ r.lang="en-US";
+ r.interimResults=false;
+ r.continuous=false;
+ r.maxAlternatives=1;
+
+ let gotResult=false;
+ let finished=false;
+ const finishError=(message)=>{
+   if(finished)return;
+   finished=true;
+   box.innerHTML='<span class="warning">'+message+'</span>'+lessonMicMarkup(target);
+ };
+
  box.innerHTML='<span class="listeningPulse">🎙️ Слушаю…</span>';
- try{r.start();}catch(e){
-   box.innerHTML='<span class="warning">Не удалось запустить микрофон. Попробуй ещё раз.</span>';
-   return;
- }
+
  r.onresult=e=>{
+   gotResult=true;
    const got=e.results[0][0].transcript;
    lessonScore=similarity(target,got);
    const good=lessonScore>=80;
    box.innerHTML='<div class="resultWord '+(good?"success":"warning")+'">'+(good?"✓ Получилось!":"↻ Пока не получилось")+'</div><div class="recognizedText">'+esc(got)+'</div><div class="resultScore">'+lessonScore+'%</div>'+
      (good?'<div class="small resultHint">Отлично. Переходим дальше…</div>':'<div class="small resultHint">Попробуй ещё раз.</div>'+lessonMicMarkup(target));
+   finished=true;
    if(good){
      setTimeout(()=>{
        const idx=current.items.findIndex(x=>x[0]===target);
@@ -226,7 +215,27 @@ function lessonSpeak(target){
      },1000);
    }
  };
- r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>'+lessonMicMarkup(target);
+
+ r.onerror=e=>{
+   const code=e&&e.error?e.error:"";
+   if(code==="not-allowed"||code==="service-not-allowed"){
+     finishError("Safari не разрешил распознавание речи. Разреши микрофон и распознавание речи для Safari в настройках iPhone.");
+   }else if(code==="no-speech"){
+     finishError("Я не услышал речь. Нажми микрофон и произнеси фразу ещё раз.");
+   }else{
+     finishError("Не удалось распознать речь. Нажми микрофон и попробуй ещё раз.");
+   }
+ };
+
+ r.onend=()=>{
+   if(!gotResult&&!finished)finishError("Речь не распознана. Говори сразу после появления «Слушаю…».");
+ };
+
+ try{
+   r.start();
+ }catch(e){
+   finishError("Не удалось запустить микрофон. Нажми ещё раз.");
+ }
 }
 function finishPhrase(i,isReview){ const text=current.items[i][0]; if(isReview){if(lessonScore!==null)scheduleReview(text,lessonScore);save();toast("Результат сохранён");go("today");return;} markDone(i); }
 function markDone(i){
@@ -254,15 +263,41 @@ function findPracticePhrase(){
  for(const c of COURSES){if(c.level===store.level){const x=c.items.find(i=>!store.done.includes(i[0]));if(x)return x}}
  return COURSES[0].items[0]
 }
-function startSpeech(target){
- const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+async function startSpeech(target){
  const box=document.getElementById("speechResult");
- if(!SR){box.innerHTML='<span class="warning">Safari/браузер не дал доступ к распознаванию речи. Попробуйте Chrome или Safari с разрешённым микрофоном.</span>';return}
- const r=new SR();r.lang=store.accent==="UK"?"en-GB":"en-US";r.interimResults=false;r.maxAlternatives=1;
+ if(!box)return;
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){
+   box.innerHTML='<span class="warning">На iPhone открой SpeakFlow в Safari — этот браузер нужен для распознавания речи.</span>';
+   return;
+ }
+
+ box.textContent="🎙️ Разрешаем микрофон…";
+ try{
+   if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+     stream.getTracks().forEach(t=>t.stop());
+   }
+ }catch(e){
+   box.innerHTML='<span class="warning">Разреши микрофон для Safari в настройках iPhone.</span>';
+   return;
+ }
+
+ const r=new SR();
+ r.lang="en-US";
+ r.interimResults=false;
+ r.continuous=false;
+ r.maxAlternatives=1;
  box.textContent="🎙️ Слушаю…";
- r.onresult=e=>{const got=e.results[0][0].transcript;const score=similarity(target,got);box.innerHTML='<b>'+esc(got)+'</b><br><span class="'+(score>=80?"success":"warning")+'">Похожесть: '+score+'%</span><div class="small">Это сравнение текста распознавания с целевой фразой, не полноценная проверка произношения.</div>'};
- r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
- r.start()
+ r.onresult=e=>{
+   const got=e.results[0][0].transcript;
+   const score=similarity(target,got);
+   box.innerHTML='<b>'+esc(got)+'</b><br><span class="'+(score>=80?"success":"warning")+'">Похожесть: '+score+'%</span><div class="small">Это сравнение текста распознавания с целевой фразой, не полноценная проверка произношения.</div>';
+ };
+ r.onerror=e=>{
+   box.innerHTML='<span class="warning">'+(e.error==="no-speech"?"Речь не распознана. Попробуй ещё раз.":"Не удалось распознать речь. Проверь разрешение микрофона Safari.")+'</span>';
+ };
+ try{r.start()}catch(e){box.innerHTML='<span class="warning">Не удалось запустить распознавание. Нажми ещё раз.</span>'}
 }
 function similarity(a,b){
  const A=a.toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/),B=b.toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/);let same=0;for(const x of A)if(B.includes(x))same++;return Math.round(same/Math.max(A.length,B.length)*100)
