@@ -88,3 +88,14 @@
 .tutorMic small{display:block;font-size:12px;font-weight:700;margin-top:3px}
 .tutorResult{min-height:92px;background:#0b1120;border:1px solid #29344f;border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:center;text-align:center}
 .tutorResult .feedbackBox{text-align:left}
+
+/* SpeakFlow 25 — usable AI Tutor dialogue controls */
+.tutorActions{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+.tutorActions button{flex:1;min-width:120px}
+.tutorManual{margin:12px 0;text-align:left}
+.tutorManual label{display:block;color:#aeb7cb;font-size:13px;margin-bottom:7px}
+.tutorInputRow{display:flex;gap:8px}
+.tutorInputRow input{min-width:0;flex:1;background:#0b1120;border:1px solid #35415f;border-radius:12px;padding:13px;color:#f7f8fc;font:inherit}
+.tutorInputRow input::placeholder{color:#77839f}
+.tutorInputRow button{background:#6979df;color:white;border-radius:12px;padding:0 15px;font-weight:800}
+.tutorResult .tutorActions{margin-top:12px}
