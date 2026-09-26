@@ -26,7 +26,7 @@ const COURSES=[
 ];
 const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,accent:"UK",lastDay:""};
 const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}"));
-let page="today",current=null;
+let page="today",current=null,lessonPhase=0,lessonScore=null;
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
@@ -85,15 +85,76 @@ function learn(){
  '<section class="hero"><div class="eyebrow">Обучение</div><h1>Говорим фразами</h1><p>Слушай → повторяй → говори без подсказки. Сложность поднимается постепенно.</p></section>'+
  COURSES.filter(c=>c.level===store.level).map(c=>'<div class="card course"><div class="courseIcon">'+c.icon+'</div><div style="flex:1"><h3>'+c.title+'</h3><div class="muted">'+c.desc+'</div><div class="small" style="margin-top:6px">'+c.items.filter(x=>store.done.includes(x[0])).length+'/'+c.items.length+' фраз изучено</div><button class="secondary" style="margin-top:10px" onclick="openCourse('+c.id+')">Открыть</button></div></div>').join(""))
 }
-function openCourse(id){current=COURSES.find(c=>c.id===id);renderLesson(0)}
-function renderLesson(i){
- const text=current.items[i][0],tr=current.items[i][1],done=store.done.includes(text);
- shell('<button class="back" onclick="go(\'learn\')">← К урокам</button><div class="card"><div class="eyebrow">'+current.level+' · '+current.title+'</div><div class="small" style="margin-top:7px">Фраза '+(i+1)+' из '+current.items.length+'</div><div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div><div class="audioBox"><audio id="player" controls preload="auto" src="'+(AUDIO[text]||"")+'"></audio><div class="row" style="margin-top:10px"><button class="secondary" onclick="playRate(0.75)">🐢 Медленно</button><button class="secondary" onclick="playRate(1)">▶ Нормально</button><button class="secondary" onclick="playRate(1.15)">⚡ Быстро</button></div><div id="audioStatus" class="status">'+(AUDIO[text]?"Аудио готово.":"Аудио пока не добавлено.")+'</div></div><button class="primary" onclick="speakEnglish(\''+jsq(text)+'\')">🔊 Повторить английскую фразу</button><button class="primary" onclick="markDone('+i+')">'+(done?"✓ Повторить и продолжить":"Я выучил эту фразу")+'</button></div>')
+function openCourse(id){
+ current=COURSES.find(c=>c.id===id);
+ lessonPhase=0;
+ lessonScore=null;
+ renderLesson(0);
 }
-function playRate(rate){const p=audioEl();if(!p)return;p.playbackRate=rate;p.currentTime=0;const q=p.play();if(q&&q.catch)q.catch(()=>{})}
+function phaseLabel(){
+ return ["1. Слушаем","2. Повторяем","3. Говорим"][lessonPhase]||"Тренировка";
+}
+function renderLesson(i){
+ const item=current.items[i],text=item[0],tr=item[1],done=store.done.includes(text);
+ const progress=Math.round((i/current.items.length)*100);
+ let body='<button class="back" onclick="go(\'learn\')">← К урокам</button>'+
+ '<div class="lessonSteps"><span class="'+(lessonPhase===0?"active":"")+'">1 Слушай</span><span class="'+(lessonPhase===1?"active":"")+'">2 Повторяй</span><span class="'+(lessonPhase===2?"active":"")+'">3 Говори</span></div>'+
+ '<div class="card"><div class="eyebrow">'+current.level+' · '+current.title+'</div>'+
+ '<div class="small" style="margin-top:7px">Фраза '+(i+1)+' из '+current.items.length+'</div>'+
+ '<div class="miniMeter"><i style="width:'+progress+'%"></i></div>'+
+ '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>';
+ if(lessonPhase===0){
+   body+='<div class="audioBox"><div class="phaseTitle">🎧 Сначала просто послушай</div><p class="phaseText">Обрати внимание на ритм и интонацию.</p><audio id="player" controls preload="auto" src="'+(AUDIO[text]||"")+'"></audio>'+
+   '<button class="primary" onclick="speakEnglish(\''+jsq(text)+'\')">🔊 Слушать английский</button></div>'+
+   '<button class="secondary full" onclick="lessonPhase=1;renderLesson('+i+')">Я услышал → повторяем</button>';
+ } else if(lessonPhase===1){
+   body+='<div class="audioBox"><div class="phaseTitle">🗣️ Повторяй сразу после голоса</div><p class="phaseText">Нажми на кнопку, послушай и повтори вслух.</p>'+
+   '<button class="primary" onclick="speakEnglish(\''+jsq(text)+'\')">🔊 Произнести образец</button>'+
+   '<button class="secondary full" onclick="lessonPhase=2;renderLesson('+i+')">Готов → теперь говорю сам</button></div>';
+ } else {
+   body+='<div class="audioBox"><div class="phaseTitle">🎙️ Теперь без подсказки</div><p class="phaseText">Скажи фразу своими словами как можно ближе к образцу.</p>'+
+   '<button class="mic bigMic" onclick="lessonSpeak(\''+jsq(text)+'\')">🎙️</button>'+
+   '<div id="lessonSpeech" class="transcript">'+(lessonScore===null?"Нажми микрофон и говори.":"Результат последней попытки: "+lessonScore+"%")+'</div></div>'+
+   '<button id="finishLessonBtn" class="primary '+(lessonScore===null?"disabled":"")+'" '+(lessonScore===null?"disabled":"")+' onclick="markDone('+i+')">'+(done?"✓ Повторить и перейти дальше":"✓ Завершить фразу")+'</button>';
+ }
+ body+='</div>';
+ shell(body);
+}
+function lessonSpeak(target){
+ const box=document.getElementById("lessonSpeech");
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){
+   box.innerHTML='<span class="warning">Распознавание речи недоступно в этом браузере. Можно продолжить через «Говорить».</span>';
+   return;
+ }
+ const r=new SR();
+ r.lang=store.accent==="UK"?"en-GB":"en-US";
+ r.interimResults=false;r.maxAlternatives=1;
+ box.textContent="🎙️ Слушаю…";
+ r.onresult=e=>{
+   const got=e.results[0][0].transcript;
+   lessonScore=similarity(target,got);
+   box.innerHTML='<b>'+esc(got)+'</b><br><span class="'+(lessonScore>=80?"success":"warning")+'">Похожесть текста: '+lessonScore+'%</span><div class="small">Это пока проверка распознанного текста, а не полноценный фонемный анализ произношения.</div>';
+   const btn=document.getElementById("finishLessonBtn");
+   if(btn){btn.disabled=false;btn.classList.remove("disabled")}
+ };
+ r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
+ r.start();
+}
 function markDone(i){
- const text=current.items[i][0];if(!store.done.includes(text)){store.done.push(text);store.xp+=10}save();
- if(i+1<current.items.length)renderLesson(i+1);else{toast("Урок завершён");go("today")}
+ const text=current.items[i][0];
+ if(!store.done.includes(text)){store.done.push(text);store.xp+=10;updateStreak()}
+ save();
+ if(i+1<current.items.length){lessonPhase=0;lessonScore=null;renderLesson(i+1)}
+ else{toast("Урок завершён");go("today")}
+}
+function updateStreak(){
+ const todayKey=new Date().toISOString().slice(0,10);
+ if(store.lastDay===todayKey)return;
+ const prev=new Date();prev.setDate(prev.getDate()-1);
+ const prevKey=prev.toISOString().slice(0,10);
+ store.streak=store.lastDay===prevKey?store.streak+1:1;
+ store.lastDay=todayKey;
 }
 function speak(){
  const phrase=findPracticePhrase();
