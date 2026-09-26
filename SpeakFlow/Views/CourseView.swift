@@ -10,8 +10,10 @@ struct CourseView: View {
             } label: {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(lesson.title).font(.headline)
-                    Text(lesson.topic).font(.subheadline).foregroundStyle(.secondary)
-                    Text("\(lesson.phrases.count) phrases").font(.caption).foregroundStyle(.tertiary)
+                    Text(lesson.topic).foregroundStyle(.secondary)
+                    Text("\(lesson.phrases.count) phrases")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
                 .padding(.vertical, 4)
             }
