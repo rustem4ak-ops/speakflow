@@ -10,24 +10,17 @@ final class SpeechRecognizer: NSObject {
     private(set) var transcript = ""
 
     func start() {
-        requestPermissionsAndStart()
-    }
-
-    private func requestPermissionsAndStart() {
         SFSpeechRecognizer.requestAuthorization { [weak self] status in
             guard status == .authorized else { return }
             AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
                 guard granted else { return }
-                DispatchQueue.main.async {
-                    self?.beginRecording()
-                }
+                DispatchQueue.main.async { self?.beginRecording() }
             }
         }
     }
 
     private func beginRecording() {
         stop()
-
         transcript = ""
         let recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         recognitionRequest.shouldReportPartialResults = true
@@ -35,18 +28,13 @@ final class SpeechRecognizer: NSObject {
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
-
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             self?.request?.append(buffer)
         }
 
         task = recognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
-            if let result {
-                self?.transcript = result.bestTranscription.formattedString
-            }
-            if error != nil {
-                self?.stop()
-            }
+            if let result { self?.transcript = result.bestTranscription.formattedString }
+            if error != nil { self?.stop() }
         }
 
         do {
@@ -61,9 +49,7 @@ final class SpeechRecognizer: NSObject {
     }
 
     func stop() {
-        if engine.isRunning {
-            engine.stop()
-        }
+        if engine.isRunning { engine.stop() }
         engine.inputNode.removeTap(onBus: 0)
         request?.endAudio()
         task?.cancel()
@@ -71,7 +57,5 @@ final class SpeechRecognizer: NSObject {
         request = nil
     }
 
-    deinit {
-        stop()
-    }
+    deinit { stop() }
 }
