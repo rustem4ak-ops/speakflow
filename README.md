@@ -1,24 +1,16 @@
-# SpeakFlow 8.1
+# SpeakFlow
 
-Fast iPhone-first English speaking practice.
+Полностью очищенная версия SpeakFlow.
 
-- 60 themed courses
-- 600 lessons
-- 3,000 exact English phrases
-- 3,000 pre-generated Kokoro US English audio files
-- Static MP3 audio; no Kokoro inference on the iPhone
-- 6.3-style fast Cache Storage audio engine
-- Current lesson audio is prefetched in the background
-- Speech recognition / repeat check / shadowing
-- Daily goal, streak, XP, weak-phrase review and progress
-- PWA for iPhone Safari / Home Screen
+Цель первой сборки — сначала доказать, что английское аудио стабильно воспроизводится на iPhone Safari через обычный HTML5 audio.
 
-## Audio generation
+В этой версии намеренно удалены:
+- speechSynthesis / TTS fallback
+- tts.js
+- tts-worker.js
+- старый audio cache
+- Service Worker
 
-GitHub Actions uses 16 parallel shards to generate the 3,000 recordings, then verifies exactly 3,000 MP3 files and 3,000 manifest entries before committing `audio/`.
+Озвучка запускается через локальные WAV-файлы в репозитории и стандартный HTML5 audio player.
 
-The audio format is MP3, mono, 24 kHz, 64 kbps. This keeps the download footprint much smaller than 3,000 WAV files while remaining natively playable by Safari.
-
-## Important
-
-The app never synthesizes Kokoro audio on the iPhone. GitHub Actions creates the recordings ahead of time. The phone only downloads, caches and plays them.
+После подтверждения работы звука можно расширять приложение: A1–C1, больше уроков, shadowing, запись голоса, оценка речи, повторение и прогресс.

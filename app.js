@@ -1,90 +1,93 @@
-const STORAGE_KEY='speakflow-v9';
-const levels=['A1','A2','B1','B2','C1'];
-const todayKey=()=>new Date().toISOString().slice(0,10);
-let courses=[];
-const screen=document.getElementById('screen');
-const streakEl=document.getElementById('streak');
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const defaults={tab:'home',level:'A2',dailyGoal:1,dailyDone:0,lastStudyDate:null,streak:0,completed:[],minutes:0,xp:0,phraseStats:{},studyDays:{},currentCourse:null,currentPhrase:0};
-let state={...defaults};
-try{state={...defaults,...JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')};state.phraseStats=state.phraseStats||{};state.studyDays=state.studyDays||{};}catch{}
-const save=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-function ensureDay(){const d=todayKey(); if(state.lastStudyDate!==d){state.dailyDone=0;if(state.lastStudyDate){const prev=new Date(Date.now()-86400000).toISOString().slice(0,10);if(state.lastStudyDate===prev)state.streak=(state.streak||0)+1;else state.streak=1;}state.lastStudyDate=d;save();} if(streakEl)streakEl.textContent=state.streak||0;}
-function stat(text){return state.phraseStats[text]||{attempts:0,successes:0,mastery:0,due:null,lastSeen:null};}
-function updatePhrase(text,ok){const s=stat(text);s.attempts++;if(ok)s.successes++;s.mastery=Math.max(0,Math.min(5,s.mastery+(ok?1:-1)));const days=ok?[2,4,7,14,30][Math.min(s.mastery-1,4)]:1;s.due=new Date(Date.now()+days*86400000).toISOString().slice(0,10);s.lastSeen=todayKey();state.phraseStats[text]=s;}
-function allPhrases(){return courses.flatMap(c=>c.phrases.map(p=>({course:c,p})));}
-function weak(){return allPhrases().filter(x=>{const s=stat(x.p[0]);return s.attempts>0&&s.mastery<3;}).sort((a,b)=>stat(a.p[0]).mastery-stat(b.p[0]).mastery);}
-function due(){const d=todayKey();return allPhrases().filter(x=>{const s=stat(x.p[0]);return s.due&&s.due<=d;});}
-function nextCourse(){const levelCourses=courses.filter(c=>c.level===state.level);return levelCourses.find(c=>!state.completed.includes(c.id))||courses.find(c=>!state.completed.includes(c.id))||courses[0];}
-function setTab(tab){stopRecognition();state.tab=tab;save();render();document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));}
-document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
-function render(){ensureDay(); if(state.tab==='home')home();else if(state.tab==='learn')learn();else if(state.tab==='practice')practice();else progress();}
-function home(){const next=nextCourse(), w=weak().slice(0,3), done=state.completed.length, total=courses.length;screen.innerHTML=`
-<section class="hero"><small>TODAY · ${state.level}</small><h2>${next.icon} ${esc(next.title)}</h2><p>${esc(next.desc)}. 15 minutes: listen → repeat → shadow → speak.</p><button class="btn btn-light" onclick="openLesson(${next.id})">Start today's lesson →</button></section>
-<div class="section-title"><h3>Today's plan</h3><span class="muted">${state.dailyDone}/${state.dailyGoal}</span></div>
-<div class="card"><div class="between"><b>Daily goal</b><b>${state.dailyDone>=state.dailyGoal?'✓ Complete':'15 min'}</b></div><div class="progressbar"><i style="width:${Math.min(100,state.dailyDone/state.dailyGoal*100)}%"></i></div><div class="grid mini"><div class="stat"><strong>🔥 ${state.streak}</strong><span>Streak</span></div><div class="stat"><strong>${state.xp}</strong><span>XP</span></div><div class="stat"><strong>${state.minutes}</strong><span>Minutes</span></div><div class="stat"><strong>${done}/${total}</strong><span>Courses</span></div></div></div>
-<div class="section-title"><h3>Review</h3><span class="muted">${w.length} weak · ${due().length} due</span></div>
-<div class="card"><p class="muted">Repeat phrases you struggled with. The app schedules successful phrases for 2, 4, 7, 14 and 30 days.</p><button class="btn btn-dark full" onclick="reviewWeak()">Review weak phrases</button></div>
-<div class="section-title"><h3>Lisn-style routine</h3></div><div class="grid"><div class="stat"><strong>🎧</strong><span>Listen</span></div><div class="stat"><strong>🗣️</strong><span>Repeat</span></div><div class="stat"><strong>🔁</strong><span>Shadow</span></div><div class="stat"><strong>🤖</strong><span>Speak</span></div></div>
-<div class="notice">SpeakFlow plays pre-generated English audio when available. If a phrase has no recording yet, Safari uses the iPhone's English voice instantly.</div>`;}
-function learn(){const selected=courses.filter(c=>c.level===state.level);screen.innerHTML=`<div class="section-title"><h3>Courses</h3><span class="muted">${courses.length} courses · 3,000 phrases</span></div><div class="chips">${levels.map(l=>`<button class="chip ${l===state.level?'selected':''}" onclick="setLevel('${l}')">${l}</button>`).join('')}</div><div class="section-title"><h3>${state.level} learning plan</h3><span class="muted">${selected.length} courses</span></div>${selected.map(courseCard).join('')}<div class="section-title"><h3>All themes</h3></div>${courses.filter(c=>c.level!==state.level).map(courseCard).join('')}`;}
-function setLevel(l){state.level=l;save();learn();}
-function courseCard(c){const done=state.completed.includes(c.id);return `<button class="card course-card" onclick="openLesson(${c.id})"><span class="icon">${c.icon}</span><span class="course-copy"><b>${esc(c.title)}</b><small>${c.level} · ${c.time} · ${esc(c.topic)}</small><span>${esc(c.desc)}</span><small>${c.units.length} lessons · ${c.phrases.length} phrases ${done?'· ✓ completed':''}</small></span><strong>${done?'✓':'›'}</strong></button>`;}
-function voiceStatusText(){const v=window.voiceEngine||{};if(v.state==='ready')return '🧠 Kokoro US English ready';if(v.state==='loading')return '⏳ Checking audio pack';if(v.state==='error')return '✓ English audio ready';return '🧠 Kokoro US English · af_heart';}
-function updateVoiceStatus(){const e=document.getElementById('voiceStatus');if(e)e.textContent=voiceStatusText();}
-window.addEventListener('speakflow-voice-status',updateVoiceStatus);
-function practice(){screen.innerHTML=`<div class="section-title"><h3>Practice</h3></div><div class="card"><b>🎧 Audio-first</b><p class="muted">Listen to native-style pre-generated English audio, then speak the whole phrase.</p><button class="btn btn-dark full" onclick="prepareNeuralVoice()">Load audio pack</button><button class="btn full" onclick="testNeuralEnglish()">▶ Test US English</button><div class="muted" id="voiceStatus">${voiceStatusText()}</div></div><div class="card"><b>📝 Listening test</b><p class="muted">Hear a phrase and choose what you heard.</p><button class="btn btn-dark full" onclick="listeningQuiz()">Start listening test</button></div><div class="card"><b>🤖 Offline conversation</b><p class="muted">A free phrase-based roleplay without an API key.</p><button class="btn btn-dark full" onclick="chatDemo()">Open conversation</button></div>`;updateVoiceStatus();}
-function progress(){const mastered=allPhrases().filter(x=>stat(x.p[0]).mastery>=5).length, total=allPhrases().length;screen.innerHTML=`<div class="section-title"><h3>Progress</h3></div><div class="grid"><div class="stat"><strong>${state.xp}</strong><span>XP</span></div><div class="stat"><strong>${state.minutes}</strong><span>Minutes</span></div><div class="stat"><strong>${mastered}</strong><span>Mastered</span></div><div class="stat"><strong>🔥 ${state.streak}</strong><span>Streak</span></div></div><div class="section-title"><h3>Course progress</h3><span class="muted">${state.completed.length}/${courses.length}</span></div><div class="card"><div class="progressbar"><i style="width:${state.completed.length/courses.length*100}%"></i></div><p class="muted">${Math.round(state.completed.length/courses.length*100)}% of courses complete · ${mastered}/${total} phrases mastered</p></div><div class="section-title"><h3>Recent study days</h3></div><div class="calendar">${Array.from({length:14},(_,i)=>{const d=new Date(Date.now()-(13-i)*86400000).toISOString().slice(0,10);return `<span class="day ${state.studyDays[d]?'done':''}">${d.slice(8,10)}</span>`}).join('')}</div><div class="section-title"><h3>Weak phrases</h3></div>${weak().slice(0,8).map(x=>`<div class="card"><b>${esc(x.p[0])}</b><div class="muted">${esc(x.p[1])} · mastery ${stat(x.p[0]).mastery}/5</div></div>`).join('')||'<div class="card">No weak phrases yet. Keep practising!</div>'}`;}
-let activeRecognition=null;let speechOk=false;
-function normalize(s){return String(s).toLowerCase().replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();}
-function lev(a,b){const m=a.length,n=b.length;const d=Array.from({length:m+1},()=>Array(n+1).fill(0));for(let i=0;i<=m;i++)d[i][0]=i;for(let j=0;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n];}
-function similarity(a,b){a=normalize(a);b=normalize(b);if(!a||!b)return 0;return Math.max(0,1-lev(a,b)/Math.max(a.length,b.length));}
-function stopRecognition(){if(activeRecognition){try{activeRecognition.abort();}catch{}activeRecognition=null;}speechOk=false;}
-function setMicState(s){const b=document.getElementById('mic');if(!b)return;b.classList.remove('listening','correct','wrong');if(s==='listening')b.classList.add('listening');if(s==='correct')b.classList.add('correct');if(s==='wrong')b.classList.add('wrong');b.textContent=s==='listening'?'🔴':s==='correct'?'🟢':s==='wrong'?'🔴':'🎙️';}
-function startSpeech(){stopRecognition();const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const out=document.getElementById('feedback');if(!SR){out.innerHTML='<b>Speech recognition is not available in this browser.</b><br><span class="muted">Try Safari on iPhone or Chrome on Android.</span>';return;}const c=courses.find(x=>x.id===state.currentCourse);const phrase=c.phrases[state.currentPhrase][0];const r=new SR();activeRecognition=r;r.lang='en-US';r.interimResults=false;r.continuous=false;r.maxAlternatives=3;speechOk=false;setMicState('listening');out.textContent='Listening…';r.onresult=e=>{let best='',score=0;for(const a of e.results[0]){const sc=similarity(phrase,a.transcript);if(sc>score){score=sc;best=a.transcript;}}speechOk=true;const ok=score>=.72;updatePhrase(phrase,ok);if(ok){state.xp+=5;out.innerHTML=`You said: <b>${esc(best)}</b><br><span class="ok">✓ Correct · ${Math.round(score*100)}% match</span>`;setMicState('correct');}else{out.innerHTML=`You said: <b>${esc(best)}</b><br><span class="bad">✗ Not quite · ${Math.round(score*100)}% match</span><br><span class="muted">Try the whole phrase again.</span>`;setMicState('wrong');}save();};r.onspeechend=()=>{try{r.stop();}catch{}};r.onend=()=>{if(activeRecognition===r)activeRecognition=null;if(!speechOk&&out.textContent.includes('Listening')){setMicState('wrong');out.innerHTML='<span class="bad">I did not catch the phrase.</span><br><span class="muted">Tap the microphone and try again.</span>';}};r.onerror=e=>{if(activeRecognition===r)activeRecognition=null;setMicState('wrong');out.innerHTML=e.error==='not-allowed'?'<span class="bad">Microphone access is blocked.</span><br><span class="muted">Allow microphone access for SpeakFlow.</span>':'<span class="bad">I could not hear that.</span><br><span class="muted">Please try again.</span>';};try{r.start();}catch{activeRecognition=null;setMicState('wrong');out.textContent='Could not start the microphone. Please try again.';}}
-function openLesson(id,phrase=0){stopRecognition();const c=courses.find(x=>x.id===id);if(!c)return;state.currentCourse=id;state.currentPhrase=phrase;save();renderLesson();}
-function renderLesson(){const c=courses.find(x=>x.id===state.currentCourse),i=state.currentPhrase,p=c.phrases[i];screen.innerHTML=`<div class="lesson-head"><button class="back" onclick="setTab('learn')">← Back</button><span>${i+1}/${c.phrases.length}</span></div><div class="card lesson-card"><span class="chip selected">${c.level} · ${esc(c.topic)}</span><h2>${esc(c.title)}</h2><div class="unit-label">${esc(c.units[Math.floor(i/5)].title)}</div><div class="phrase">${esc(p[0])}</div><div class="translation">${esc(p[1])}</div><div class="audio-row"><button class="btn btn-dark" onclick='playPhrase(${JSON.stringify(p[0])})'>▶ Listen</button><button class="btn" onclick='speak(${JSON.stringify(p[1])},"ru-RU")'>🇷🇺 Перевод</button></div><button class="btn full" onclick="shadowPhrase()">🔁 Shadowing</button><hr><div class="shadow"><b>Repeat phrase</b><div class="muted">Tap the microphone, speak, and it will stop automatically.</div><button class="bigmic" id="mic" onclick="startSpeech()">🎙️</button><div class="feedback" id="feedback">Tap the microphone and say the phrase.</div></div></div><div class="lesson-nav"><button class="btn" ${i===0?'disabled':''} onclick="openLesson(${c.id},${Math.max(0,i-1)})">← Previous</button><button class="btn btn-dark" onclick="nextPhrase()">${i===c.phrases.length-1?'Finish lesson':'Next →'}</button></div>`;
-  // Start downloading this lesson in the background immediately; the UI never waits.
-  window.prefetchLessonAudio?.(c.phrases,i).catch(()=>{});
+const AUDIO={
+"Could I see your passport, please?":"audio/phrase-e7b3ad2ee847649f.wav",
+"What time does boarding start?":"audio/phrase-74e0f239f12ab94f.wav",
+"Could you help me, please?":"audio/phrase-6e3a43c8ddb9fbe9.wav",
+"Could I have a table for two?":"audio/phrase-6fbddce5a2cf827e.wav",
+"What do you recommend?":"audio/phrase-b7ae204d28120ba3.wav",
+"How much does this cost?":"audio/phrase-72ca21eac47b0e6c.wav",
+"How is your day going?":"audio/phrase-eb5a524c4df789db.wav",
+"What do you do for work?":"audio/phrase-5d30c21e973a830e.wav",
+"Could we move the meeting to tomorrow?":"audio/phrase-ae2b84e73b6eab9d.wav",
+"I would like to discuss my study plan with you.":"audio/phrase-c924509683c8e207.wav",
+"From my perspective, the main issue is the lack of clear priorities.":"audio/phrase-51cfab9e0d721dda.wav",
+"I see your point, but I am not sure the data supports that conclusion.":"audio/phrase-5354fed232600459.wav"
+};
+const COURSES=[
+{id:1,level:"A1",title:"Travel basics",icon:"✈️",desc:"Самые нужные фразы для поездки.",items:[
+["Could I see your passport, please?","Могу я посмотреть ваш паспорт, пожалуйста?"],
+["What time does boarding start?","Во сколько начинается посадка?"],
+["Could you help me, please?","Не могли бы вы мне помочь, пожалуйста?"]]},
+{id:2,level:"A2",title:"Restaurant & shopping",icon:"🍽️",desc:"Разговоры в ресторане и магазине.",items:[
+["Could I have a table for two?","Можно столик на двоих?"],
+["What do you recommend?","Что вы рекомендуете?"],
+["How much does this cost?","Сколько это стоит?"]]},
+{id:3,level:"B1",title:"Everyday conversation",icon:"💬",desc:"Свободнее говорим о себе и жизни.",items:[
+["How is your day going?","Как проходит ваш день?"],
+["What do you do for work?","Кем вы работаете?"],
+["Could we move the meeting to tomorrow?","Можем перенести встречу на завтра?"]]},
+{id:4,level:"B2",title:"Study & work",icon:"💼",desc:"Более длинные фразы для работы и учёбы.",items:[
+["I would like to discuss my study plan with you.","Я хотел бы обсудить с вами мой учебный план."],
+["From my perspective, the main issue is the lack of clear priorities.","С моей точки зрения, главная проблема — отсутствие чётких приоритетов."]]},
+{id:5,level:"C1",title:"Advanced discussion",icon:"🧠",desc:"Продвинутая английская речь.",items:[
+["I see your point, but I am not sure the data supports that conclusion.","Я понимаю вашу точку зрения, но не уверен, что данные подтверждают этот вывод."]]}
+];
+const store=JSON.parse(localStorage.getItem("speakflow10")||'{"done":[],"xp":0,"streak":0,"level":"A1"}');
+let page="home",current=null;
+const app=document.getElementById("app");
+function save(){localStorage.setItem("speakflow10",JSON.stringify(store))}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function audioEl(){return document.getElementById("player")}
+function setAudio(text,autoplay=true){
+ const src=AUDIO[text], p=audioEl(), st=document.getElementById("audioStatus");
+ if(!p||!src){if(st)st.textContent="Для этой фразы аудио ещё не добавлено.";return}
+ p.src=src;
+ p.load();
+ if(st)st.textContent="Аудио готово. Нажмите Play.";
+ if(autoplay){
+   const promise=p.play();
+   if(promise&&promise.catch)promise.catch(()=>{if(st)st.textContent="Safari заблокировал автоматический запуск. Нажмите ▶ Play на плеере."})
+ }
 }
-function nextPhrase(){const c=courses.find(x=>x.id===state.currentCourse);if(state.currentPhrase<c.phrases.length-1){state.currentPhrase++;save();renderLesson();}else finishLesson(c.id);}
-function finishLesson(id){stopRecognition();if(!state.completed.includes(id))state.completed.push(id);state.xp+=50;state.minutes+=15;state.dailyDone=Math.min(state.dailyGoal,state.dailyDone+1);state.studyDays[todayKey()]=true;save();screen.innerHTML=`<div class="card done"><div class="trophy">🎉</div><h2>Lesson complete!</h2><p class="muted">+50 XP · +15 minutes</p><button class="btn btn-dark full" onclick="setTab('home')">Back to today's plan</button></div>`;}
-function speak(text,lang='en-US'){
-  if(!('speechSynthesis' in window)) return false;
-  try{
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(String(text));
-    u.lang=lang;
-    u.rate=.9;
-    u.pitch=1;
-    u.volume=1;
-    const voices=speechSynthesis.getVoices();
-    const voice=voices.find(v=>/^en-US$/i.test(v.lang))||voices.find(v=>/^en-/i.test(v.lang));
-    if(voice)u.voice=voice;
-    speechSynthesis.speak(u);
-    return true;
-  }catch{return false}
+function nav(){
+ return '<div class="nav"><div class="navin">'+
+ '<button onclick="go(\'home\')" class="'+(page==="home"?"active":"")+'">🏠<small>Главная</small></button>'+
+ '<button onclick="go(\'learn\')" class="'+(page==="learn"?"active":"")+'">📚<small>Уроки</small></button>'+
+ '<button onclick="go(\'progress\')" class="'+(page==="progress"?"active":"")+'">📈<small>Прогресс</small></button>'+
+ '</div></div>'
 }
-function playPhrase(text){
-  stopRecognition();
-  // IMPORTANT: call speech synthesis synchronously from the user's tap.
-  // iOS Safari may reject audio started only after an awaited network request.
-  const started=speak(text,'en-US');
-  const out=document.getElementById('feedback');
-  if(out && started) out.textContent='🔊 Playing English…';
-  if(!started && out) out.innerHTML='<span class="bad">This browser did not allow audio playback.</span>';
-  return started;
+function shell(body,title="SpeakFlow"){
+ app.innerHTML='<div class="wrap"><div class="top"><div class="brand">Speak<span>Flow</span></div><div class="pill">'+title+'</div></div>'+body+'</div>'+nav()
 }
-function testNeuralEnglish(){if(courses.length)speak(courses[0].phrases[0][0],'en-US');}
-function shadowPhrase(){
-  const c=courses.find(x=>x.id===state.currentCourse),text=c.phrases[state.currentPhrase][0];
-  speak(text,'en-US');
-  setTimeout(()=>startSpeech(),1400);
+function home(){
+ const done=store.done.length;
+ shell('<section class="hero"><div class="eyebrow">English speaking trainer</div><h1>Учимся говорить английский естественно</h1><p>Слушай реальную аудиодорожку, повторяй фразу и постепенно собирай свой словарный запас.</p><button class="primary" onclick="go(\'learn\')">Начать обучение</button></section>'+
+ '<div class="levels">'+["A1","A2","B1","B2","C1"].map(x=>'<button class="level '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();home()">'+x+'</button>').join('')+'</div>'+
+ '<div class="card"><div class="eyebrow">Сегодня</div><div class="row" style="margin-top:10px"><div><b>'+done+'</b><div class="small">фраз изучено</div></div><div><b>'+store.xp+'</b><div class="small">XP</div></div><div><b>'+store.streak+'</b><div class="small">дней серии</div></div></div></div>'+
+ '<div class="card"><b>🔊 Проверка озвучки</b><p class="muted">Здесь используется обычный HTML5-аудиоплеер и WAV-файл, без TTS.</p><div class="audioBox"><div class="phrase" style="font-size:20px">Could I see your passport, please?</div><audio id="player" controls preload="auto" src="'+AUDIO["Could I see your passport, please?"]+'"></audio><button class="bigPlay" onclick="testAudio()">▶ Проверить английскую озвучку</button><div id="audioStatus" class="status">Нажмите кнопку или ▶ на плеере.</div></div></div>')
 }
-function reviewWeak(){const item=weak()[0]||due()[0];if(!item){setTab('practice');return;}openLesson(item.course.id,item.course.phrases.findIndex(p=>p[0]===item.p[0]));}
-function listeningQuiz(){const pool=allPhrases().slice(0,20);const target=pool[Math.floor(Math.random()*pool.length)];const choices=[target,...pool.filter(x=>x.p[0]!==target.p[0]).sort(()=>Math.random()-.5).slice(0,2)].sort(()=>Math.random()-.5);screen.innerHTML=`<div class="lesson-head"><button class="back" onclick="setTab('practice')">← Back</button><b>Listening test</b></div><div class="card"><h2>What did you hear?</h2><button class="btn btn-dark full" onclick='playPhrase(${JSON.stringify(target.p[0])})'>▶ Play audio</button><div id="quiz">${choices.map((x,i)=>`<button class="card quiz-option" onclick="answerQuiz(${i},${choices.indexOf(target)})">${esc(x.p[0])}</button>`).join('')}</div></div>`;window.quizTarget=target;}
-function answerQuiz(i,correct){const opts=document.querySelectorAll('.quiz-option');opts.forEach((b,n)=>{b.disabled=true;if(n===correct)b.classList.add('correct-answer');});const ok=i===correct;if(ok){state.xp+=10;updatePhrase(window.quizTarget.p[0],true);}else updatePhrase(window.quizTarget.p[0],false);save();document.getElementById('quiz').insertAdjacentHTML('beforeend',`<div class="notice ${ok?'good':'badbox'}">${ok?'✓ Correct! +10 XP':'✗ Not quite. Listen again and try to remember the whole phrase.'}</div>`);}
-function chatDemo(){screen.innerHTML=`<div class="lesson-head"><button class="back" onclick="setTab('practice')">← Back</button><b>Offline conversation</b></div><div class="card"><div id="chat"><div class="bubble">Hi! Nice to meet you. What do you usually do at the weekend?</div></div><div class="inputrow"><input id="msg" placeholder="Type your answer…"><button class="btn btn-dark" onclick="sendMsg()">Send</button></div></div><div class="notice">Free offline roleplay. It is a fixed practice simulator, not a live LLM.</div>`;}
-function sendMsg(){const input=document.getElementById('msg'),v=input.value.trim();if(!v)return;const chat=document.getElementById('chat');chat.innerHTML+=`<div class="bubble me">${esc(v)}</div>`;input.value='';const replies=['That sounds interesting. Tell me more.','That makes sense. How did you get started?','Nice! What happened next?','I see. What would you recommend?'];setTimeout(()=>chat.innerHTML+=`<div class="bubble">${replies[Math.floor(Math.random()*replies.length)]}</div>`,350);}
-async function boot(){try{const r=await fetch('data.json',{cache:'no-cache'});courses=await r.json();window.__speakflowCourses=courses;render();}catch(e){screen.innerHTML='<div class="card"><b>Could not load course data.</b><p class="muted">Refresh the page or check that data.json is uploaded.</p></div>';}}
-boot();
+function learn(){
+ const list=COURSES.filter(c=>c.level===store.level);
+ shell('<button class="back" onclick="go(\'home\')">← Назад</button><div class="hero"><div class="eyebrow">Уровень '+store.level+'</div><h1>Уроки</h1><p>Каждый урок построен вокруг коротких фраз, которые можно слушать и повторять.</p></div>'+
+ list.map(c=>'<div class="card course"><div class="courseIcon">'+c.icon+'</div><div style="flex:1"><h3>'+c.title+'</h3><div class="muted">'+c.desc+'</div><button class="secondary" style="margin-top:10px" onclick="openCourse('+c.id+')">Открыть урок</button></div></div>').join(''))
+}
+function openCourse(id){current=COURSES.find(c=>c.id===id);renderLesson(0)}
+function renderLesson(i){
+ const text=current.items[i][0],tr=current.items[i][1],done=store.done.includes(text);
+ shell('<button class="back" onclick="go(\'learn\')">← К урокам</button><div class="card"><div class="eyebrow">'+current.level+' · '+current.title+'</div><div class="small" style="margin-top:7px">Фраза '+(i+1)+' из '+current.items.length+'</div><div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div><div class="audioBox"><audio id="player" controls preload="auto" src="'+(AUDIO[text]||"")+'"></audio><button class="bigPlay" onclick="playCurrent('+i+')">▶ Слушать</button><div id="audioStatus" class="status">'+(AUDIO[text]?"Аудио готово.":"Аудио для этой фразы пока не добавлено.")+'</div></div><button class="primary" onclick="markDone('+i+')">'+(done?"✓ Повторить и продолжить":"Я выучил эту фразу")+'</button></div>')
+}
+function playCurrent(i){setAudio(current.items[i][0],true)}
+function markDone(i){
+ const text=current.items[i][0]; if(!store.done.includes(text))store.done.push(text);store.xp+=10;save();
+ if(i+1<current.items.length)renderLesson(i+1);else{toast("Урок завершён +30 XP");go("learn")}
+}
+function progress(){
+ const total=COURSES.reduce((n,c)=>n+c.items.length,0),pct=Math.round(store.done.length/total*100);
+ shell('<div class="hero"><div class="eyebrow">Ваш прогресс</div><h1>'+pct+'%</h1><p>'+store.done.length+' из '+total+' фраз отмечены как изученные.</p><div class="meter" style="margin-top:16px"><i style="width:'+pct+'%"></i></div></div>'+
+ '<div class="card"><h3>Изученные фразы</h3><div class="list">'+(store.done.length?store.done.map(x=>'<div class="listItem"><div><b>'+esc(x)+'</b><div class="small">English phrase</div></div><span class="check">✓</span></div>').join(''):'<div class="empty">Пока нет изученных фраз.</div>')+'</div></div>'+
+ '<button class="secondary" style="width:100%" onclick="resetProgress()">Сбросить прогресс</button>')
+}
+function resetProgress(){if(confirm("Сбросить прогресс?")){store.done=[];store.xp=0;save();progress()}}
+function testAudio(){const p=audioEl(),st=document.getElementById("audioStatus");p.currentTime=0;const q=p.play();if(q&&q.catch)q.catch(()=>{st.textContent="Не удалось начать воспроизведение. Попробуйте нажать ▶ на самом плеере."});else st.textContent="🔊 Воспроизведение запущено."}
+function toast(t){const x=document.createElement("div");x.className="toast";x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1800)}
+function go(x){page=x;({home,learn,progress}[x])()}
+home();
