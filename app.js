@@ -318,41 +318,61 @@ function renderTutor(){
  if(!tutorScenario){tutor();return}
  const turn=tutorScenario.turns[tutorTurn];
  const progress=Math.round((tutorTurn/tutorScenario.turns.length)*100);
+ const line=tutorTurn===0?tutorScenario.opening:tutorScenario.turns[tutorTurn-1].reply;
  shell('<div class="lessonTop"><button class="back" onclick="tutor()">← Ситуации</button><span class="lessonCount">'+tutorScenario.icon+' '+tutorScenario.title+'</span></div>'+
  '<div class="card tutorCard"><div class="eyebrow">'+tutorScenario.role+'</div><div class="tutorProgress"><i style="width:'+progress+'%"></i></div>'+
- '<div class="tutorBubble other"><small>'+tutorScenario.role+'</small><div>'+esc(tutorTurn===0?tutorScenario.opening:(tutorTurn>0?tutorScenario.turns[tutorTurn-1].reply:""))+'</div></div>'+
+ '<div class="tutorBubble other"><small>'+tutorScenario.role+'</small><div id="tutorLine">'+esc(line)+'</div></div>'+
+ '<div class="tutorActions"><button class="secondary" onclick="tutorListen()">🔊 Прослушать реплику</button><button class="secondary" onclick="tutorListen(true)">🐢 Медленно</button></div>'+
  '<div class="tutorHint"><span>💡 Подсказка</span>'+esc(turn.tip)+'</div>'+
  '<button class="tutorMic" onclick="tutorSpeak()">🎙️<small>Ответить голосом</small></button>'+
- '<div id="tutorResult" class="tutorResult">Нажми микрофон и ответь по-английски.</div></div>'+
- '<div class="card"><div class="eyebrow">Тренировка</div><p class="muted">Не обязательно повторять подсказку дословно. Главное — передать смысл.</p></div>');
+ '<div class="tutorManual"><label for="tutorText">Или напиши ответ по-английски</label><div class="tutorInputRow"><input id="tutorText" type="text" placeholder="Например: I would like a coffee" autocomplete="off"><button onclick="submitTutorText()">Проверить</button></div></div>'+
+ '<div id="tutorResult" class="tutorResult">Нажми микрофон или введи ответ текстом.</div></div>'+
+ '<div class="card"><div class="eyebrow">Тренировка</div><p class="muted">После ответа увидишь разбор. Можно попробовать ещё раз или продолжить диалог.</p><button class="secondary full" onclick="tutorNext()">Пропустить реплику →</button></div>');
+}
+function tutorListen(slow=false){
+ const line=document.getElementById("tutorLine");
+ if(!line)return;
+ if(!("speechSynthesis" in window)){toast("Озвучивание недоступно в этом браузере");return}
+ window.speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(line.textContent);u.lang="en-US";u.rate=slow?0.78:0.95;
+ window.speechSynthesis.speak(u);
+}
+function submitTutorText(){
+ const input=document.getElementById("tutorText"),got=(input&&input.value||"").trim();
+ if(!got){toast("Сначала введи ответ на английском");return}
+ evaluateTutorAnswer(got);
+}
+function tutorNext(){
+ if(!tutorScenario)return;
+ if(tutorTurn+1<tutorScenario.turns.length){tutorTurn++;tutorBusy=false;renderTutor()}
+ else finishTutor();
+}
+function evaluateTutorAnswer(got){
+ const box=document.getElementById("tutorResult");if(!box||!tutorScenario)return;
+ const turn=tutorScenario.turns[tutorTurn],example=turn.tip.replace(/^Попробуй:\\s*/,"");
+ const keysHit=turn.keys.some(k=>got.toLowerCase().includes(k));
+ const score=keysHit?Math.max(78,similarity(example,got)):similarity(example,got);
+ tutorScore+=score;
+ box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Ответ принят":"↻ Можно улучшить")+'</div><div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+feedbackHtml(example,got)+
+ '<div class="tutorActions"><button class="secondary" onclick="tutorListen()">🔊 Прослушать реплику</button><button class="primary" onclick="tutorNext()">Продолжить диалог →</button></div>'+
+ '<div class="small">Оценка ориентировочная: сравниваются слова ответа с примером, а не смысл всего предложения.</div>';
 }
 async function tutorSpeak(){
  if(tutorBusy)return;
  const box=document.getElementById("tutorResult");if(!box)return;
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SR){box.innerHTML='<span class="warning">Распознавание речи недоступно. На iPhone открой SpeakFlow в Safari.</span>';return}
+ if(!SR){box.innerHTML='<span class="warning">Распознавание речи недоступно. Можно написать ответ в поле выше.</span>';return}
  tutorBusy=true;box.innerHTML='<span class="listeningPulse">🎙️ Слушаю…</span>';
  try{
   if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
    const stream=await navigator.mediaDevices.getUserMedia({audio:true});stream.getTracks().forEach(t=>t.stop());
   }
- }catch(e){tutorBusy=false;box.innerHTML='<span class="warning">Разреши микрофон для Safari и попробуй ещё раз.</span>';return}
+ }catch(e){tutorBusy=false;box.innerHTML='<span class="warning">Разреши микрофон для Safari и попробуй ещё раз. Или введи ответ текстом.</span>';return}
  const r=new SR();r.lang="en-US";r.interimResults=false;r.continuous=false;r.maxAlternatives=1;
- let done=false,timer=setTimeout(()=>{if(!done){done=true;tutorBusy=false;try{r.abort()}catch(e){}box.innerHTML='<span class="warning">Не удалось получить ответ. Попробуй ещё раз.</span>'}},12000);
- r.onresult=e=>{
-  if(done)return;done=true;clearTimeout(timer);tutorBusy=false;
-  const got=e.results[0][0].transcript,turn=tutorScenario.turns[tutorTurn],score=turn.keys.some(k=>got.toLowerCase().includes(k))?Math.max(78,similarity(turn.tip.replace(/^Попробуй:\s*/,""),got)):Math.min(69,similarity(turn.tip.replace(/^Попробуй:\s*/,""),got));
-  tutorScore+=score;
-  box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Хороший ответ":"↻ Попробуй ещё раз")+'</div><div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+feedbackHtml(turn.tip.replace(/^Попробуй:\s*/,""),got);
-  setTimeout(()=>{
-   if(score<70){return}
-   if(tutorTurn+1<tutorScenario.turns.length){tutorTurn++;renderTutor()}
-   else{finishTutor()}
-  },1100);
- };
- r.onerror=e=>{if(done)return;done=true;clearTimeout(timer);tutorBusy=false;box.innerHTML='<span class="warning">Не удалось распознать речь. Нажми микрофон ещё раз.</span>'};
- r.onend=()=>{};
- try{r.start()}catch(e){clearTimeout(timer);tutorBusy=false;box.innerHTML='<span class="warning">Не удалось запустить микрофон. Попробуй ещё раз.</span>'}
+ let done=false,timer=setTimeout(()=>{if(!done){done=true;tutorBusy=false;try{r.abort()}catch(e){}box.innerHTML='<span class="warning">Не удалось получить ответ. Попробуй ещё раз или введи ответ текстом.</span>'}},12000);
+ r.onresult=e=>{if(done)return;done=true;clearTimeout(timer);tutorBusy=false;evaluateTutorAnswer(e.results[0][0].transcript)};
+ r.onerror=e=>{if(done)return;done=true;clearTimeout(timer);tutorBusy=false;box.innerHTML='<span class="warning">Не удалось распознать речь. Попробуй ещё раз или введи ответ текстом.</span>'};
+ try{r.start()}catch(e){clearTimeout(timer);tutorBusy=false;box.innerHTML='<span class="warning">Не удалось запустить микрофон. Введи ответ текстом.</span>'}
 }
 function finishTutor(){
  const avg=Math.round(tutorScore/tutorScenario.turns.length);
