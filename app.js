@@ -25,11 +25,56 @@ const COURSES=[
 ["I see your point, but I am not sure the data supports that conclusion.","Я понимаю вашу точку зрения, но не уверен, что данные подтверждают этот вывод."]]}
 ];
 const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,accent:"UK",lastDay:""};
-const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}"));
+const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}")); store.review=store.review||{};
 let page="today",current=null,lessonPhase=0,lessonScore=null;
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+
+function reviewData(text){
+ if(!store.review[text])store.review[text]={attempts:0,best:0,last:0,due:0,level:"new"};
+ return store.review[text];
+}
+function reviewStatus(r){
+ if(!r||r.attempts===0)return ["new","Новая"];
+ if(r.best>=90)return ["green","Уверенно"];
+ if(r.best>=70)return ["yellow","Нужно повторить"];
+ return ["red","Слабая"];
+}
+function reviewDue(){
+ const now=Date.now();
+ return COURSES.flatMap(c=>c.items.map(x=>({item:x,course:c,r:reviewData(x[0])})))
+   .filter(x=>x.r.due<=now)
+   .sort((a,b)=>(a.r.best-b.r.best)||(a.r.due-b.r.due));
+}
+function scheduleReview(text,score){
+ const r=reviewData(text),now=Date.now();
+ r.attempts++;
+ r.best=Math.max(r.best,score);
+ r.last=now;
+ const days=score>=90?7:score>=80?3:score>=70?1:0;
+ r.due=now+days*86400000;
+ r.level=reviewStatus(r)[0];
+}
+function reviewCount(){return reviewDue().length}
+function smartReview(){
+ const due=reviewDue();
+ if(!due.length){
+   shell('<section class="hero"><div class="eyebrow">Smart Review</div><h1>Сегодня всё повторено 🎉</h1><p>Слабых или просроченных фраз сейчас нет. Новые фразы появятся после следующих уроков.</p><button class="primary" onclick="go(\'learn\')">Изучать новые фразы</button></section>');
+   return;
+ }
+ const x=due[0];
+ current={id:"review",level:x.course.level,title:"Smart Review",items:[x.item]};
+ lessonPhase=2;lessonScore=null;
+ renderLesson(0,true);
+}
+function smartReviewCard(){
+ const due=reviewDue();
+ if(!due.length)return '<div class="card"><div class="eyebrow">Smart Review</div><h3>Все повторения на сегодня выполнены 🎉</h3><p class="muted">Продолжай изучать новые фразы.</p></div>';
+ const x=due[0],st=reviewStatus(x.r);
+ return '<div class="card reviewCard"><div class="eyebrow">🧠 Smart Review</div><div class="reviewHead"><div><h3>Пора повторить</h3><p class="muted">'+due.length+' '+(due.length===1?"фраза":"фразы")+' ждут повторения</p></div><span class="reviewBadge '+st[0]+'">'+st[1]+'</span></div><div class="reviewPhrase">'+esc(x.item[0])+'</div><div class="small">Лучший результат: '+(x.r.attempts?x.r.best+"%":"ещё нет попыток")+'</div><button class="primary" onclick="smartReview()">🎙️ Начать Smart Review</button></div>';
+}
+
 function audioEl(){return document.getElementById("player")}
 function setAudio(text,autoplay=true){
  const p=audioEl(),st=document.getElementById("audioStatus"),src=AUDIO[text];
@@ -73,7 +118,7 @@ function today(){
  const recommended=COURSES.find(c=>c.level===store.level)||COURSES[0];
  const next=recommended.items.find(x=>!store.done.includes(x[0]))||recommended.items[0];
  shell('<section class="hero"><div class="eyebrow">Ваш план · '+store.minutes+' минут</div><h1>Сегодня говорим, а не просто учим</h1><p>'+goalName(store.goal)+'. Следующая тренировка: '+recommended.title+'.</p><button class="primary" onclick="openCourse('+recommended.id+')">▶ Начать тренировку</button></section>'+
- '<div class="statGrid"><div class="statBox"><b>'+done+'</b><div class="small">фраз</div></div><div class="statBox"><b>'+store.xp+'</b><div class="small">XP</div></div><div class="statBox"><b>'+store.streak+'</b><div class="small">серия</div></div></div>'+
+ '<div class="statGrid"><div class="statBox"><b>'+done+'</b><div class="small">фраз</div></div><div class="statBox"><b>'+store.xp+'</b><div class="small">XP</div></div><div class="statBox"><b>'+store.streak+'</b><div class="small">серия</div></div></div>'+smartReviewCard()+
  '<div class="card"><div class="eyebrow">Следующая фраза</div><div class="phrase" style="font-size:21px">'+esc(next[0])+'</div><div class="translation">'+esc(next[1])+'</div><audio id="player" controls preload="auto" src="'+(AUDIO[next[0]]||"")+'"></audio><button class="secondary" style="width:100%;margin-top:10px" onclick="setAudio(\''+jsq(next[0])+'\',true)">▶ Послушать</button><div id="audioStatus" class="status">Аудио готово.</div></div>'+
  '<div class="card"><div class="eyebrow">Прогресс курса</div><div style="display:flex;justify-content:space-between;margin:8px 0 9px"><b>'+pct+'%</b><span class="small">'+done+' / '+total+'</span></div><div class="meter"><i style="width:'+pct+'%"></i></div></div>')
 }
@@ -94,7 +139,7 @@ function openCourse(id){
 function phaseLabel(){
  return ["1. Слушаем","2. Повторяем","3. Говорим"][lessonPhase]||"Тренировка";
 }
-function renderLesson(i){
+function renderLesson(i,isReview=false){
  const item=current.items[i],text=item[0],tr=item[1],done=store.done.includes(text);
  const progress=Math.round((i/current.items.length)*100);
  let body='<button class="back" onclick="go(\'learn\')">← К урокам</button>'+
@@ -115,7 +160,7 @@ function renderLesson(i){
    body+='<div class="audioBox"><div class="phaseTitle">🎙️ Теперь без подсказки</div><p class="phaseText">Скажи фразу своими словами как можно ближе к образцу.</p>'+
    '<button class="mic bigMic" onclick="lessonSpeak(\''+jsq(text)+'\')">🎙️</button>'+
    '<div id="lessonSpeech" class="transcript">'+(lessonScore===null?"Нажми микрофон и говори.":"Результат последней попытки: "+lessonScore+"%")+'</div></div>'+
-   '<button id="finishLessonBtn" class="primary '+(lessonScore===null?"disabled":"")+'" '+(lessonScore===null?"disabled":"")+' onclick="markDone('+i+')">'+(done?"✓ Повторить и перейти дальше":"✓ Завершить фразу")+'</button>';
+   '<button id="finishLessonBtn" class="primary '+(lessonScore===null?"disabled":"")+'" '+(lessonScore===null?"disabled":"")+' onclick="finishPhrase('+i+','+isReview+')">'+(isReview?"✓ Сохранить результат":"✓ Завершить фразу")+'</button>';
  }
  body+='</div>';
  shell(body);
@@ -141,8 +186,10 @@ function lessonSpeak(target){
  r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
  r.start();
 }
+function finishPhrase(i,isReview){ const text=current.items[i][0]; if(lessonScore!==null)scheduleReview(text,lessonScore); if(isReview){save();toast("Результат сохранён");go("today");return;} markDone(i); }
 function markDone(i){
  const text=current.items[i][0];
+ if(lessonScore!==null)scheduleReview(text,lessonScore);
  if(!store.done.includes(text)){store.done.push(text);store.xp+=10;updateStreak()}
  save();
  if(i+1<current.items.length){lessonPhase=0;lessonScore=null;renderLesson(i+1)}
