@@ -23,3 +23,26 @@
 
 /* SpeakFlow 18 — voice choices, bigger microphone, next lesson */
 .voiceChoices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 7px}.voiceChoice{border:1px solid #34405f;background:#121a2d;color:#dfe5f5;border-radius:16px;padding:14px 10px;font-size:16px;font-weight:800;min-height:54px;box-shadow:0 6px 18px #0002}.voiceChoice:active{transform:scale(.98)}.primaryVoice{background:#6979df;border-color:#7888f0;color:#fff}.nextLessonBtn{width:100%;border:1px solid #4c5bb0;background:#1a2341;color:#fff;border-radius:17px;padding:13px 16px;margin-top:16px;font-size:16px;font-weight:850;text-align:left;display:grid;grid-template-columns:1fr auto;align-items:center}.nextLessonBtn span{font-size:24px;grid-column:2;grid-row:1 / span 2}.nextLessonBtn small{display:block;text-align:left;color:#8995b5;font-size:11px;font-weight:600;margin-top:2px}.nextLessonBtn:disabled{opacity:.45}.lessonBottom{bottom:82px;padding:10px 0 5px}.bottomMic{width:86px;height:86px;border-radius:50%;font-size:34px;box-shadow:0 10px 34px #6979df70}.bottomMicText{font-size:11px;margin-top:3px}.wrap{padding-bottom:205px}
+
+
+/* SpeakFlow 19 — compact one-screen lesson */
+.lessonCard{min-height:0!important;padding:18px 16px 16px}
+.lessonCard .miniMeter{margin-bottom:14px}
+.lessonCard .phrase{margin:12px 0 7px;font-size:25px}
+.lessonCard .translation{margin-bottom:8px}
+.voiceChoices{margin:10px 0 5px}
+.voiceChoice{min-height:50px;padding:11px 9px}
+.lessonListenHint{margin-bottom:8px}
+.lessonResult{margin-top:8px;min-height:112px!important;padding:10px;justify-content:center}
+.lessonMic{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;margin:0 auto 4px;background:#6979df;border:4px solid #2b3568;color:#fff;box-shadow:0 8px 24px #6979df55;font-size:30px}
+.lessonMic:active{transform:scale(.94)}
+.lessonMicText{font-size:11px;color:#8995b5}
+.nextLessonBtn{margin-top:10px;padding:11px 14px}
+.lessonBottom{display:none!important}
+.wrap{padding-bottom:112px!important}
+@media(max-width:480px){
+ .lessonCard .phrase{font-size:23px;line-height:1.18}
+ .lessonCard{padding:16px 14px 14px}
+ .lessonResult{min-height:104px!important}
+ .lessonMic{width:64px;height:64px;font-size:28px}
+}
