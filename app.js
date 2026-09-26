@@ -26,7 +26,7 @@ const COURSES=[
 ];
 const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,accent:"UK",lastDay:""};
 const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}")); store.review=store.review||{};
-let page="today",current=null,lessonPhase=0,lessonScore=null;
+let page="today",current=null,lessonPhase=0,lessonScore=null,lessonFinished=false;
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
@@ -90,17 +90,20 @@ if("speechSynthesis" in window){
   loadVoices();
   window.speechSynthesis.onvoiceschanged=loadVoices;
 }
-function speakEnglish(text){
+function speakEnglish(text,accentOverride){
   if(!("speechSynthesis" in window)){
     setAudio(text,true);
     return;
   }
+  const accent=accentOverride||store.accent;
   const u=new SpeechSynthesisUtterance(text);
-  u.lang=store.accent==="US"?"en-US":"en-GB";
+  u.lang=accent==="US"?"en-US":"en-GB";
   u.rate=0.95;
   u.pitch=1;
-  const wanted=store.accent==="US"?["en-US","en_US"]:["en-GB","en_GB","en"];
-  const v=voices.find(x=>wanted.includes(x.lang));
+  const wanted=accent==="US"?["en-US","en_US"]:["en-GB","en_GB"];
+  let v=voices.find(x=>wanted.includes(x.lang));
+  if(!v && accent==="UK")v=voices.find(x=>x.lang&&x.lang.toLowerCase().startsWith("en-gb"));
+  if(!v && accent==="US")v=voices.find(x=>x.lang&&x.lang.toLowerCase().startsWith("en-us"));
   if(v)u.voice=v;
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
@@ -134,7 +137,19 @@ function openCourse(id){
  current=COURSES.find(c=>c.id===id);
  lessonPhase=0;
  lessonScore=null;
+ lessonFinished=false;
  renderLesson(0);
+}
+function nextLesson(){
+ if(!current)return;
+ const idx=COURSES.findIndex(c=>c.id===current.id);
+ if(idx<0||idx+1>=COURSES.length){toast("Это последний доступный урок");return;}
+ current=COURSES[idx+1];
+ lessonPhase=0;
+ lessonScore=null;
+ lessonFinished=false;
+ renderLesson(0);
+ window.scrollTo({top:0,behavior:"smooth"});
 }
 function phaseLabel(){
  return ["1. Слушаем","2. Повторяем","3. Говорим"][lessonPhase]||"Тренировка";
@@ -142,13 +157,18 @@ function phaseLabel(){
 function renderLesson(i,isReview=false){
  const item=current.items[i],text=item[0],tr=item[1];
  const progress=Math.round(((i+1)/current.items.length)*100);
+ const doneText=lessonFinished?'<div class="resultWord success">✓ Урок завершён</div><div class="small resultHint">Можно перейти к следующему уроку.</div>':'<span class="small">После прослушивания нажми микрофон и повтори фразу.</span>';
+ const nextIndex=COURSES.findIndex(c=>c.id===current.id)+1;
+ const nextName=nextIndex<COURSES.length?COURSES[nextIndex].level+' · '+COURSES[nextIndex].title:'Все уровни пройдены';
+ const nextDisabled=nextIndex>=COURSES.length?' disabled':'';
  let body='<div class="lessonTop"><button class="back" onclick="go(\'learn\')">← К урокам</button><span class="lessonCount">'+(i+1)+' / '+current.items.length+'</span></div>'+
  '<div class="card lessonCard"><div class="eyebrow">'+current.level+' · '+current.title+'</div>'+
  '<div class="miniMeter"><i style="width:'+progress+'%"></i></div>'+
  '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>'+
- '<button class="listenAction" onclick="lessonListen(\''+jsq(text)+'\')" aria-label="Прослушать фразу"><span>🔊</span><b>Прослушать фразу</b></button>'+
- '<div class="lessonListenHint">Нажми, чтобы услышать английскую фразу</div>'+
- '<div id="lessonSpeech" class="lessonResult"><span class="small">После прослушивания нажми микрофон внизу и повтори фразу.</span></div>'+
+ '<div class="voiceChoices"><button class="voiceChoice primaryVoice" onclick="lessonListen(\''+jsq(text)+'\')">🔊 <span>Основное</span></button><button class="voiceChoice" onclick="lessonListenBritish(\''+jsq(text)+'\')">🇬🇧 <span>British</span></button></div>'+
+ '<div class="lessonListenHint">Сравни обычное звучание и британский английский</div>'+
+ '<div id="lessonSpeech" class="lessonResult">'+doneText+'</div>'+
+ '<button class="nextLessonBtn" onclick="nextLesson()"'+nextDisabled+'>Следующий урок <span>→</span><small>'+esc(nextName)+'</small></button>'+
  '</div>'+
  '<div class="lessonBottom"><button class="bottomMic" onclick="lessonSpeak(\''+jsq(text)+'\')" aria-label="Повторить фразу"><span>🎙️</span></button><div class="bottomMicText">Повтори фразу</div></div>';
  shell(body);
