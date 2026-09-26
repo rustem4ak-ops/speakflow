@@ -179,7 +179,16 @@ function lessonListen(text){
  speakEnglish(text);
  setTimeout(()=>{
    const b=document.getElementById("lessonSpeech");
-   if(b)b.innerHTML='<span class="small">Теперь нажми 🎙️ внизу и повтори фразу.</span>';
+   if(b&&!lessonFinished)b.innerHTML='<span class="small">Теперь нажми 🎙️ внизу и повтори фразу.</span>';
+ },900);
+}
+function lessonListenBritish(text){
+ const box=document.getElementById("lessonSpeech");
+ if(box)box.innerHTML='<span class="listeningPulse">🇬🇧 British English…</span>';
+ speakEnglish(text,"UK");
+ setTimeout(()=>{
+   const b=document.getElementById("lessonSpeech");
+   if(b&&!lessonFinished)b.innerHTML='<span class="small">Теперь нажми 🎙️ внизу и повтори фразу.</span>';
  },900);
 }
 function lessonSpeak(target){
@@ -219,7 +228,7 @@ function markDone(i){
  if(!store.done.includes(text)){store.done.push(text);store.xp+=10;updateStreak()}
  save();
  if(i+1<current.items.length){lessonPhase=0;lessonScore=null;renderLesson(i+1)}
- else{toast("Урок завершён");go("today")}
+ else{lessonFinished=true;toast("Урок завершён");renderLesson(i)}
 }
 function updateStreak(){
  const todayKey=new Date().toISOString().slice(0,10);
