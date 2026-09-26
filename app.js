@@ -75,7 +75,7 @@ function smartReviewCard(){
  return '<div class="card reviewCard"><div class="eyebrow">🧠 Smart Review</div><div class="reviewHead"><div><h3>Пора повторить</h3><p class="muted">'+due.length+' '+(due.length===1?"фраза":"фразы")+' ждут повторения</p></div><span class="reviewBadge '+st[0]+'">'+st[1]+'</span></div><div class="reviewPhrase">'+esc(x.item[0])+'</div><div class="small">Лучший результат: '+(x.r.attempts?x.r.best+"%":"ещё нет попыток")+'</div><button class="primary" onclick="smartReview()">🎙️ Начать Smart Review</button></div>';
 }
 
-function audioEl(){return document.getElementById("player")}
+function audioEl(){return document.getElementById("player")||document.getElementById("lessonPlayer")}
 function setAudio(text,autoplay=true){
  const p=audioEl(),st=document.getElementById("audioStatus"),src=AUDIO[text];
  if(!p||!src){if(st)st.textContent="Для этой фразы аудио ещё не добавлено.";return}
@@ -165,6 +165,7 @@ function renderLesson(i,isReview=false){
  '<div class="card lessonCard"><div class="eyebrow">'+current.level+' · '+current.title+'</div>'+
  '<div class="miniMeter"><i style="width:'+progress+'%"></i></div>'+
  '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>'+
+ '<audio id="lessonPlayer" preload="auto" hidden></audio>'+
  '<div class="voiceChoices"><button class="voiceChoice primaryVoice" onclick="lessonListen(\''+jsq(text)+'\')">🔊 <span>Основное</span></button><button class="voiceChoice" onclick="lessonListenBritish(\''+jsq(text)+'\')">🇬🇧 <span>British</span></button></div>'+
  '<div class="lessonListenHint">Сравни обычное звучание и британский английский</div>'+
  '<div id="lessonSpeech" class="lessonResult">'+(lessonFinished?doneText:lessonMicMarkup(text))+'</div>'+
