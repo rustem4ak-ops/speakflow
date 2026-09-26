@@ -46,3 +46,6 @@
  .lessonResult{min-height:104px!important}
  .lessonMic{width:64px;height:64px;font-size:28px}
 }
+
+/* SpeakFlow 20 — single main audio button */
+.voiceChoices{grid-template-columns:1fr}
