@@ -49,10 +49,38 @@ function renderLesson(){const c=courses.find(x=>x.id===state.currentCourse),i=st
 }
 function nextPhrase(){const c=courses.find(x=>x.id===state.currentCourse);if(state.currentPhrase<c.phrases.length-1){state.currentPhrase++;save();renderLesson();}else finishLesson(c.id);}
 function finishLesson(id){stopRecognition();if(!state.completed.includes(id))state.completed.push(id);state.xp+=50;state.minutes+=15;state.dailyDone=Math.min(state.dailyGoal,state.dailyDone+1);state.studyDays[todayKey()]=true;save();screen.innerHTML=`<div class="card done"><div class="trophy">🎉</div><h2>Lesson complete!</h2><p class="muted">+50 XP · +15 minutes</p><button class="btn btn-dark full" onclick="setTab('home')">Back to today's plan</button></div>`;}
-async function playPhrase(text){stopRecognition();const ok=await (window.neuralSpeak?window.neuralSpeak(text):speak(text));if(!ok){const out=document.getElementById('feedback');if(out)out.innerHTML='<span class="bad">This phrase uses the instant English device voice.</span>';}}
-async function testNeuralEnglish(){await playPhrase(courses[0].phrases[0][0]);}
-function speak(text,lang='en-US'){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=.95;speechSynthesis.speak(u);}
-function shadowPhrase(){const c=courses.find(x=>x.id===state.currentCourse),text=c.phrases[state.currentPhrase][0];playPhrase(text).then(()=>setTimeout(()=>startSpeech(),700));}
+function speak(text,lang='en-US'){
+  if(!('speechSynthesis' in window)) return false;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(String(text));
+    u.lang=lang;
+    u.rate=.9;
+    u.pitch=1;
+    u.volume=1;
+    const voices=speechSynthesis.getVoices();
+    const voice=voices.find(v=>/^en-US$/i.test(v.lang))||voices.find(v=>/^en-/i.test(v.lang));
+    if(voice)u.voice=voice;
+    speechSynthesis.speak(u);
+    return true;
+  }catch{return false}
+}
+function playPhrase(text){
+  stopRecognition();
+  // IMPORTANT: call speech synthesis synchronously from the user's tap.
+  // iOS Safari may reject audio started only after an awaited network request.
+  const started=speak(text,'en-US');
+  const out=document.getElementById('feedback');
+  if(out && started) out.textContent='🔊 Playing English…';
+  if(!started && out) out.innerHTML='<span class="bad">This browser did not allow audio playback.</span>';
+  return started;
+}
+function testNeuralEnglish(){if(courses.length)speak(courses[0].phrases[0][0],'en-US');}
+function shadowPhrase(){
+  const c=courses.find(x=>x.id===state.currentCourse),text=c.phrases[state.currentPhrase][0];
+  speak(text,'en-US');
+  setTimeout(()=>startSpeech(),1400);
+}
 function reviewWeak(){const item=weak()[0]||due()[0];if(!item){setTab('practice');return;}openLesson(item.course.id,item.course.phrases.findIndex(p=>p[0]===item.p[0]));}
 function listeningQuiz(){const pool=allPhrases().slice(0,20);const target=pool[Math.floor(Math.random()*pool.length)];const choices=[target,...pool.filter(x=>x.p[0]!==target.p[0]).sort(()=>Math.random()-.5).slice(0,2)].sort(()=>Math.random()-.5);screen.innerHTML=`<div class="lesson-head"><button class="back" onclick="setTab('practice')">← Back</button><b>Listening test</b></div><div class="card"><h2>What did you hear?</h2><button class="btn btn-dark full" onclick='playPhrase(${JSON.stringify(target.p[0])})'>▶ Play audio</button><div id="quiz">${choices.map((x,i)=>`<button class="card quiz-option" onclick="answerQuiz(${i},${choices.indexOf(target)})">${esc(x.p[0])}</button>`).join('')}</div></div>`;window.quizTarget=target;}
 function answerQuiz(i,correct){const opts=document.querySelectorAll('.quiz-option');opts.forEach((b,n)=>{b.disabled=true;if(n===correct)b.classList.add('correct-answer');});const ok=i===correct;if(ok){state.xp+=10;updatePhrase(window.quizTarget.p[0],true);}else updatePhrase(window.quizTarget.p[0],false);save();document.getElementById('quiz').insertAdjacentHTML('beforeend',`<div class="notice ${ok?'good':'badbox'}">${ok?'✓ Correct! +10 XP':'✗ Not quite. Listen again and try to remember the whole phrase.'}</div>`);}
