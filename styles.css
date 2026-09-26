@@ -60,3 +60,11 @@
 @keyframes audioPulse{50%{filter:brightness(1.08);transform:translateY(-1px)}}
 .lessonMic{transition:transform .16s ease,box-shadow .2s ease,filter .16s ease}
 .lessonMic:active{transform:scale(.92)!important;filter:brightness(.92)}
+
+
+/* SpeakFlow 23 — clear speech feedback */
+.feedbackBox{margin-top:8px;padding:10px 11px;border-radius:13px;background:#121a2d;border:1px solid #27314b;text-align:left;font-size:12px;color:#aeb7cb}
+.feedbackStats{margin-top:4px;color:#dfe4f2;font-weight:700}
+.feedbackLine{margin-top:5px;line-height:1.4}
+.feedbackLabel{color:#8995b5;font-weight:700}
+.feedbackBox .success{color:#7ee2ae}
