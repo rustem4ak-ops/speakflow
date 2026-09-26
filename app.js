@@ -49,7 +49,7 @@ function renderLesson(){const c=courses.find(x=>x.id===state.currentCourse),i=st
 }
 function nextPhrase(){const c=courses.find(x=>x.id===state.currentCourse);if(state.currentPhrase<c.phrases.length-1){state.currentPhrase++;save();renderLesson();}else finishLesson(c.id);}
 function finishLesson(id){stopRecognition();if(!state.completed.includes(id))state.completed.push(id);state.xp+=50;state.minutes+=15;state.dailyDone=Math.min(state.dailyGoal,state.dailyDone+1);state.studyDays[todayKey()]=true;save();screen.innerHTML=`<div class="card done"><div class="trophy">🎉</div><h2>Lesson complete!</h2><p class="muted">+50 XP · +15 minutes</p><button class="btn btn-dark full" onclick="setTab('home')">Back to today's plan</button></div>`;}
-async function playPhrase(text){stopRecognition();const ok=await window.neuralSpeak(text);if(!ok){const out=document.getElementById('feedback');if(out)out.innerHTML='<span class="bad">This phrase uses the instant English device voice.</span>';}}
+async function playPhrase(text){stopRecognition();const ok=await (window.neuralSpeak?window.neuralSpeak(text):speak(text));if(!ok){const out=document.getElementById('feedback');if(out)out.innerHTML='<span class="bad">This phrase uses the instant English device voice.</span>';}}
 async function testNeuralEnglish(){await playPhrase(courses[0].phrases[0][0]);}
 function speak(text,lang='en-US'){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=.95;speechSynthesis.speak(u);}
 function shadowPhrase(){const c=courses.find(x=>x.id===state.currentCourse),text=c.phrases[state.currentPhrase][0];playPhrase(text).then(()=>setTimeout(()=>startSpeech(),700));}
