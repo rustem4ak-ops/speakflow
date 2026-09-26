@@ -170,7 +170,7 @@ function phaseLabel(){
 function renderLesson(i,isReview=false){
  const item=current.items[i],text=item[0],tr=item[1]; lessonTarget=text;
  const progress=Math.round(((i+1)/current.items.length)*100);
- const doneText=lessonFinished?'<div class="resultWord success">✓ Урок завершён</div><div class="small resultHint">Можно перейти к следующему уроку.</div>':'<span class="small">После прослушивания нажми микрофон и повтори фразу.</span>';
+ const doneText=lessonFinished?'<div class="resultWord success">✓ Урок завершён</div><div class="small resultHint">Фразы урока пройдены. Теперь закрепим их коротким тестом.</div><button class="primary" style="margin-top:12px;width:100%" onclick="startCourseQuiz()">📝 Мини-тест урока</button>':'<span class="small">После прослушивания нажми микрофон и повтори фразу.</span>';
  const nextIndex=COURSES.findIndex(c=>c.id===current.id)+1;
  const nextName=nextIndex<COURSES.length?COURSES[nextIndex].level+' · '+COURSES[nextIndex].title:'Все уровни пройдены';
  const nextDisabled=nextIndex>=COURSES.length?' disabled':'';
@@ -320,6 +320,42 @@ function updateStreak(){
 }
 
 
+
+function startCourseQuiz(){
+ if(!current||!current.items||current.id==="review"){toast("Тест доступен после обычного урока");return}
+ const pool=[...current.items];
+ courseQuizQuestions=pool.sort(()=>Math.random()-.5).slice(0,Math.min(5,pool.length));
+ courseQuizIndex=0;courseQuizScore=0;
+ renderCourseQuiz();
+}
+function renderCourseQuiz(){
+ if(courseQuizIndex>=courseQuizQuestions.length){finishCourseQuiz();return}
+ const item=courseQuizQuestions[courseQuizIndex],correct=item[1];
+ const others=current.items.filter(x=>x!==item).sort(()=>Math.random()-.5).slice(0,3).map(x=>x[1]);
+ const options=[correct,...others].sort(()=>Math.random()-.5);
+ shell('<div class="lessonTop"><button class="back" onclick="renderLesson(current.items.length-1)">← Урок</button><span class="lessonCount">Тест '+(courseQuizIndex+1)+' / '+courseQuizQuestions.length+'</span></div>'+
+ '<div class="card lessonCard"><div class="eyebrow">📝 Проверка урока · '+current.level+'</div>'+
+ '<div class="miniMeter"><i style="width:'+Math.round(courseQuizIndex/courseQuizQuestions.length*100)+'%"></i></div>'+
+ '<div class="phrase" style="font-size:20px">'+esc(item[0])+'</div><div class="small" style="margin-top:8px">Выбери правильный перевод:</div>'+
+ '<div style="display:grid;gap:10px;margin-top:14px">'+options.map((x,i)=>'<button class="secondary quizOption" onclick="answerCourseQuiz('+JSON.stringify(x)+','+JSON.stringify(correct)+')">'+esc(x)+'</button>').join('')+'</div>'+
+ '</div>');
+}
+function answerCourseQuiz(answer,correct){
+ const buttons=[...document.querySelectorAll(".quizOption")];
+ buttons.forEach(b=>b.disabled=true);
+ const ok=answer===correct;
+ if(ok)courseQuizScore++;
+ toast(ok?"✓ Правильно":"↻ Не совсем");
+ setTimeout(()=>{courseQuizIndex++;renderCourseQuiz()},450);
+}
+function finishCourseQuiz(){
+ const total=courseQuizQuestions.length||1;
+ const percent=Math.round(courseQuizScore/total*100);
+ if(percent>=80){store.xp+=25;save()}
+ shell('<section class="hero"><div class="eyebrow">Результат урока</div><h1>'+ (percent>=80?"Отлично! 🎉":"Хорошая работа") +'</h1><p>Ты ответил правильно на <b>'+courseQuizScore+' из '+total+'</b> вопросов · <b>'+percent+'%</b></p>'+
+ '<div class="card"><h3>Что дальше?</h3><p class="muted">'+(percent>=80?"Урок закреплён. Можно переходить дальше.":"Повтори слабые фразы в Smart Review и попробуй тест ещё раз.")+'</p>'+
+ '<button class="primary" onclick="go(\'learn\')">← К урокам</button></div></section>');
+}
 const TUTOR_SCENARIOS=[
  {id:"cafe",icon:"☕",title:"В кафе",desc:"Закажи еду, уточни цену и попроси счёт.",role:"Бариста",opening:"Hi! Welcome. What would you like to order?",
   turns:[
