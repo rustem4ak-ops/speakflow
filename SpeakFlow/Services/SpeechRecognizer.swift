@@ -10,38 +10,68 @@ final class SpeechRecognizer: NSObject {
     private(set) var transcript = ""
 
     func start() {
-        transcript = ""
-        SFSpeechRecognizer.requestAuthorization { _ in }
+        requestPermissionsAndStart()
+    }
 
-        request = SFSpeechAudioBufferRecognitionRequest()
-        guard let request else { return }
+    private func requestPermissionsAndStart() {
+        SFSpeechRecognizer.requestAuthorization { [weak self] status in
+            guard status == .authorized else { return }
+            AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
+                guard granted else { return }
+                DispatchQueue.main.async {
+                    self?.beginRecording()
+                }
+            }
+        }
+    }
+
+    private func beginRecording() {
+        stop()
+
+        transcript = ""
+        let recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+        recognitionRequest.shouldReportPartialResults = true
+        request = recognitionRequest
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
-        input.removeTap(onBus: 0)
+
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             self?.request?.append(buffer)
         }
 
-        task = recognizer?.recognitionTask(with: request) { [weak self] result, _ in
-            if let result { self?.transcript = result.bestTranscription.formattedString }
+        task = recognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
+            if let result {
+                self?.transcript = result.bestTranscription.formattedString
+            }
+            if error != nil {
+                self?.stop()
+            }
         }
 
         do {
-            try AVAudioSession.sharedInstance().setCategory(.record, mode: .measurement, options: .duckOthers)
+            try AVAudioSession.sharedInstance().setCategory(.record, mode: .measurement, options: [.duckOthers])
             try AVAudioSession.sharedInstance().setActive(true)
             engine.prepare()
             try engine.start()
         } catch {
             print("Speech start error: \(error)")
+            stop()
         }
     }
 
     func stop() {
-        engine.stop()
+        if engine.isRunning {
+            engine.stop()
+        }
         engine.inputNode.removeTap(onBus: 0)
         request?.endAudio()
-        task?.finish()
+        task?.cancel()
         task = nil
+        request = nil
+    }
+
+    deinit {
+        stop()
     }
 }
