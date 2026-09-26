@@ -102,7 +102,7 @@ function today(){
  '<div class="card"><div class="eyebrow">Прогресс курса</div><div style="display:flex;justify-content:space-between;margin:8px 0 9px"><b>'+pct+'%</b><span class="small">'+done+' / '+total+'</span></div><div class="meter"><i style="width:'+pct+'%"></i></div></div>')
 }
 function goalName(g){return {travel:"Цель: путешествия",work:"Цель: работа и учёба",conversation:"Цель: свободное общение",daily:"Цель: повседневная жизнь"}[g]||"Цель: английский"}
-function jsq(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
+function jsq(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\'")}
 function learn(){
  const levels=["A1","A2","B1","B2","C1"];
  shell('<div class="tabs">'+levels.map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();learn()">'+x+'</button>').join("")+'</div>'+
@@ -308,7 +308,7 @@ const TUTOR_SCENARIOS=[
 ];
 
 function tutor(){
- const cards=TUTOR_SCENARIOS.map(x=>'<button class="tutorScenario" onclick="startTutor(\\''+x.id+'\\')"><span class="tutorIcon">'+x.icon+'</span><span><b>'+x.title+'</b><small>'+x.desc+'</small></span><strong>→</strong></button>').join("");
+ const cards=TUTOR_SCENARIOS.map(x=>'<button class="tutorScenario" onclick="startTutor(\''+x.id+'\')"><span class="tutorIcon">'+x.icon+'</span><span><b>'+x.title+'</b><small>'+x.desc+'</small></span><strong>→</strong></button>').join("");
  shell('<section class="hero"><div class="eyebrow">AI Tutor · Speaking</div><h1>Живой разговор</h1><p>Отвечай своими словами. SpeakFlow старается продолжать диалог по смыслу, а не требует одну правильную фразу.</p></section><div class="card"><div class="aiMode"><span class="aiDot"></span><b id="aiModeTitle">AI Tutor</b><small id="aiModeText">Свободный ответ · адаптивный режим</small></div><h3>Выбери ситуацию</h3>'+cards+'</div>');
 }
 function startTutor(id){
@@ -408,7 +408,7 @@ async function tutorSpeak(){
 function finishTutor(){
  const avg=Math.round(tutorScore/tutorScenario.turns.length);
  store.xp+=20;save();
- shell('<section class="hero"><div class="eyebrow">AI Tutor · Готово</div><h1>Диалог завершён 🎉</h1><p>Ты прошёл ситуацию «'+esc(tutorScenario.title)+'».</p><div class="score">'+avg+'%</div><div class="small" style="text-align:center">Средний результат диалога</div><button class="primary" onclick="startTutor(\\''+tutorScenario.id+'\\')">🔁 Повторить диалог</button><button class="secondary full" onclick="tutor()">← Выбрать другую ситуацию</button></section>');
+ shell('<section class="hero"><div class="eyebrow">AI Tutor · Готово</div><h1>Диалог завершён 🎉</h1><p>Ты прошёл ситуацию «'+esc(tutorScenario.title)+'».</p><div class="score">'+avg+'%</div><div class="small" style="text-align:center">Средний результат диалога</div><button class="primary" onclick="startTutor(\''+tutorScenario.id+'\')">🔁 Повторить диалог</button><button class="secondary full" onclick="tutor()">← Выбрать другую ситуацию</button></section>');
 }
 
 function speak(){
