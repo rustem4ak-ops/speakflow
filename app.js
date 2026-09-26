@@ -27,6 +27,7 @@ const COURSES=[
 const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,accent:"UK",lastDay:""};
 const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}")); store.review=store.review||{};
 let page="today",current=null,lessonPhase=0,lessonScore=null,lessonFinished=false,lessonTarget="";
+let lessonAudioContext=null,lessonAudioSource=null,lessonAudioToken=0,lessonRecognition=null;
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
@@ -146,14 +147,47 @@ function renderLesson(i,isReview=false){
  '</div>';
  shell(body);
 }
+function isIOS(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1)}
+function stopLessonAudio(){
+ lessonAudioToken++;
+ try{if(lessonAudioSource){lessonAudioSource.onended=null;lessonAudioSource.stop(0)}}catch(e){}
+ lessonAudioSource=null;
+}
+async function playLessonAudio(text,onDone){
+ const src=AUDIO[text];
+ if(!src){if(onDone)onDone();return}
+ stopLessonAudio();
+ const token=lessonAudioToken;
+ if(isIOS()&&window.AudioContext){
+  try{
+   lessonAudioContext=lessonAudioContext||new (window.AudioContext||window.webkitAudioContext)();
+   await lessonAudioContext.resume();
+   const res=await fetch(src,{cache:"force-cache"});
+   const data=await res.arrayBuffer();
+   const buffer=await lessonAudioContext.decodeAudioData(data);
+   if(token!==lessonAudioToken)return;
+   const source=lessonAudioContext.createBufferSource();
+   source.buffer=buffer;source.connect(lessonAudioContext.destination);lessonAudioSource=source;
+   source.onended=()=>{if(token===lessonAudioToken){lessonAudioSource=null;if(onDone)onDone()}};
+   source.start(0);
+   return;
+  }catch(e){stopLessonAudio()}
+ }
+ setAudio(text,true);
+ const p=document.getElementById("lessonPlayer");
+ if(p)p.onended=()=>{p.onended=null;if(onDone)onDone()};
+}
 function lessonListen(text){
  const box=document.getElementById("lessonSpeech");
- if(box)box.innerHTML='<span class="listeningPulse">🔊 Слушаем…</span>';
- setAudio(text,true);
- setTimeout(()=>{
-   const b=document.getElementById("lessonSpeech");
-   if(b&&!lessonFinished)b.innerHTML=lessonMicMarkup(text);
- },900);
+ const btn=document.querySelector(".primaryVoice");
+ if(btn){btn.classList.add("isPlaying");btn.innerHTML='🔊 <span>Воспроизводится…</span>'}
+ if(box&&!lessonFinished)box.innerHTML='<span class="listeningPulse">🔊 Слушаем фразу…</span><div class="small resultHint">После окончания нажми микрофон.</div>';
+ playLessonAudio(text,()=>{
+  const b=document.getElementById("lessonSpeech");
+  const currentBtn=document.querySelector(".primaryVoice");
+  if(currentBtn){currentBtn.classList.remove("isPlaying");currentBtn.innerHTML='🔊 <span>Послушать ещё раз</span>'}
+  if(b&&!lessonFinished)b.innerHTML=lessonMicMarkup(text);
+ });
 }
 
 function lessonMicMarkup(text){ return '<button class="lessonMic" onclick="lessonSpeak(lessonTarget)" aria-label="Произнести фразу">🎙️</button><div class="lessonMicText">Теперь нажми микрофон и произнеси фразу</div>';
@@ -161,82 +195,70 @@ function lessonMicMarkup(text){ return '<button class="lessonMic" onclick="lesso
 async function lessonSpeak(target){
  const box=document.getElementById("lessonSpeech");
  if(!box)return;
-
+ if(lessonRecognition){try{lessonRecognition.abort()}catch(e){}lessonRecognition=null}
+ stopLessonAudio();
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!SR){
-   box.innerHTML='<span class="warning">Этот браузер не поддерживает распознавание речи. На iPhone открой SpeakFlow именно в Safari.</span>';
-   return;
+  box.innerHTML='<span class="warning">Распознавание речи недоступно в этом браузере. На iPhone открой SpeakFlow в Safari.</span>'+lessonMicMarkup(target);
+  return;
  }
-
- box.innerHTML='<span class="listeningPulse">🎙️ Разрешаем микрофон…</span>';
-
- // iPhone/iPad Safari: explicitly request microphone permission from the user gesture
- // before starting WebKit speech recognition.
- let permissionStream=null;
+ box.innerHTML='<span class="listeningPulse">🎙️ Проверяем микрофон…</span>';
  try{
-   if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-     permissionStream=await navigator.mediaDevices.getUserMedia({audio:true});
-     permissionStream.getTracks().forEach(t=>t.stop());
-   }
- }catch(e){
-   box.innerHTML='<span class="warning">Микрофон заблокирован. Разреши доступ к микрофону для Safari: Настройки → Safari → Микрофон.</span><div class="small resultHint">После разрешения вернись сюда и нажми микрофон ещё раз.</div>'+lessonMicMarkup(target);
+  if(!window.isSecureContext){
+   box.innerHTML='<span class="warning">Микрофон работает только через HTTPS.</span>'+lessonMicMarkup(target);
    return;
+  }
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+   const permissionStream=await navigator.mediaDevices.getUserMedia({audio:true});
+   permissionStream.getTracks().forEach(t=>t.stop());
+  }
+ }catch(e){
+  const name=e&&e.name?e.name:"";
+  const msg=name==="NotFoundError"?"Микрофон не найден. Проверь микрофон iPhone.":"Микрофон не разрешён. Разреши микрофон для Safari и нажми ещё раз.";
+  box.innerHTML='<span class="warning">'+msg+'</span>'+lessonMicMarkup(target);
+  return;
  }
-
  const r=new SR();
- // English recognition is more reliable across iOS Safari when explicitly set to en-US.
- r.lang="en-US";
- r.interimResults=false;
- r.continuous=false;
- r.maxAlternatives=1;
-
- let gotResult=false;
- let finished=false;
- const finishError=(message)=>{
-   if(finished)return;
-   finished=true;
-   box.innerHTML='<span class="warning">'+message+'</span>'+lessonMicMarkup(target);
+ lessonRecognition=r;
+ r.lang="en-US";r.interimResults=false;r.continuous=false;r.maxAlternatives=3;
+ let gotResult=false,finished=false,timer=null;
+ const cleanup=()=>{if(timer)clearTimeout(timer);if(lessonRecognition===r)lessonRecognition=null};
+ const finishError=message=>{
+  if(finished)return;
+  finished=true;cleanup();
+  box.innerHTML='<span class="warning">'+message+'</span>'+lessonMicMarkup(target);
  };
-
- box.innerHTML='<span class="listeningPulse">🎙️ Слушаю…</span>';
-
+ box.innerHTML='<span class="listeningPulse">🎙️ Слушаю…</span><div class="small resultHint">Говори фразу сейчас</div>';
+ r.onstart=()=>{if(!finished)box.innerHTML='<span class="listeningPulse">🎙️ Микрофон включён</span><div class="small resultHint">Говори фразу полностью</div>'};
+ r.onaudiostart=()=>{if(!finished)box.innerHTML='<span class="listeningPulse">🎙️ Слышу звук…</span><div class="small resultHint">Продолжай говорить</div>'};
  r.onresult=e=>{
-   gotResult=true;
-   const got=e.results[0][0].transcript;
-   lessonScore=similarity(target,got);
-   const good=lessonScore>=80;
-   box.innerHTML='<div class="resultWord '+(good?"success":"warning")+'">'+(good?"✓ Получилось!":"↻ Пока не получилось")+'</div><div class="recognizedText">'+esc(got)+'</div><div class="resultScore">'+lessonScore+'%</div>'+
-     (good?'<div class="small resultHint">Отлично. Переходим дальше…</div>':'<div class="small resultHint">Попробуй ещё раз.</div>'+lessonMicMarkup(target));
-   finished=true;
-   if(good){
-     setTimeout(()=>{
-       const idx=current.items.findIndex(x=>x[0]===target);
-       if(idx>=0)markDone(idx);
-     },1000);
-   }
+  gotResult=true;
+  const alternatives=e.results[0];
+  let bestText="",bestScore=-1;
+  for(let i=0;i<alternatives.length;i++){
+   const got=alternatives[i].transcript||"",score=similarity(target,got);
+   if(score>bestScore){bestScore=score;bestText=got}
+  }
+  lessonScore=bestScore;
+  const good=lessonScore>=80;
+  finished=true;cleanup();
+  box.innerHTML='<div class="resultWord '+(good?"success":"warning")+'">'+(good?"✓ Фраза распознана":"↻ Попробуй ещё раз")+'</div><div class="recognizedText">«'+esc(bestText)+'»</div><div class="resultScore">'+lessonScore+'%</div>'+
+   (good?'<div class="small resultHint">Текст совпал достаточно хорошо. Переходим дальше…</div>':'<div class="small resultHint">Это проверка распознанного текста, а не фонемный анализ.</div>'+lessonMicMarkup(target));
+  if(good)setTimeout(()=>{const idx=current&&current.items?current.items.findIndex(x=>x[0]===target):-1;if(idx>=0)markDone(idx)},1000);
  };
-
  r.onerror=e=>{
-   const code=e&&e.error?e.error:"";
-   if(code==="not-allowed"||code==="service-not-allowed"){
-     finishError("Safari не разрешил распознавание речи. Разреши микрофон и распознавание речи для Safari в настройках iPhone.");
-   }else if(code==="no-speech"){
-     finishError("Я не услышал речь. Нажми микрофон и произнеси фразу ещё раз.");
-   }else{
-     finishError("Не удалось распознать речь. Нажми микрофон и попробуй ещё раз.");
-   }
+  const code=e&&e.error?e.error:"";
+  if(code==="not-allowed"||code==="service-not-allowed")finishError("Safari не разрешил распознавание. Проверь разрешение микрофона для Safari.");
+  else if(code==="no-speech")finishError("Я не услышал речь. Нажми микрофон и произнеси фразу ещё раз.");
+  else if(code==="audio-capture")finishError("Safari не получил звук с микрофона. Проверь доступ к микрофону.");
+  else finishError("Safari не смог распознать речь. Нажми микрофон и попробуй ещё раз.");
  };
-
- r.onend=()=>{
-   if(!gotResult&&!finished)finishError("Речь не распознана. Говори сразу после появления «Слушаю…».");
- };
-
- try{
-   r.start();
- }catch(e){
-   finishError("Не удалось запустить микрофон. Нажми ещё раз.");
- }
+ r.onnomatch=()=>finishError("Речь услышана, но фраза не распознана. Попробуй произнести её ещё раз.");
+ r.onend=()=>{if(!gotResult&&!finished)finishError("Распознавание завершилось без результата. Нажми микрофон ещё раз.")};
+ timer=setTimeout(()=>{if(!gotResult&&!finished)finishError("Safari не вернул результат за 12 секунд. Нажми микрофон ещё раз.")},12000);
+ try{r.start()}catch(e){finishError("Не удалось запустить распознавание. Нажми микрофон ещё раз.")}
 }
+
 function finishPhrase(i,isReview){ const text=current.items[i][0]; if(isReview){if(lessonScore!==null)scheduleReview(text,lessonScore);save();toast("Результат сохранён");go("today");return;} markDone(i); }
 function markDone(i){
  const text=current.items[i][0];
@@ -300,15 +322,23 @@ async function startSpeech(target){
  try{r.start()}catch(e){box.innerHTML='<span class="warning">Не удалось запустить распознавание. Нажми ещё раз.</span>'}
 }
 function similarity(a,b){
- const A=a.toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/),B=b.toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/);let same=0;for(const x of A)if(B.includes(x))same++;return Math.round(same/Math.max(A.length,B.length)*100)
+ const norm=s=>String(s).toLowerCase().replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim();
+ const A=norm(a).split(" ").filter(Boolean),B=norm(b).split(" ").filter(Boolean);
+ if(!A.length||!B.length)return 0;
+ let prev=Array.from({length:B.length+1},(_,i)=>i);
+ for(let i=1;i<=A.length;i++){
+  const cur=[i];
+  for(let j=1;j<=B.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(A[i-1]===B[j-1]?0:1));
+  prev=cur;
+ }
+ return Math.max(0,Math.round((1-prev[B.length]/Math.max(A.length,B.length))*100));
 }
+
 function english(){
  shell('<section class="hero"><div class="eyebrow">Мой English</div><h1>Настрой обучение под себя</h1><p>Здесь мы будем собирать персональную программу, слабые фразы и привычку говорить каждый день.</p></section>'+
  '<div class="card"><h3>Моя цель</h3><div class="goalGrid">'+[
  ["conversation","💬","Свободно говорить","Разговорная речь"],["travel","✈️","Путешествия","Аэропорт, отель, поездки"],["work","💼","Работа и учёба","Встречи, переписка"],["daily","🏠","Повседневная жизнь","Магазины, услуги, быт"]].map(x=>'<button class="goalBtn '+(store.goal===x[0]?"active":"")+'" onclick="setGoal(\''+x[0]+'\')"><b>'+x[1]+' '+x[2]+'</b><span>'+x[3]+'</span></button>').join("")+'</div></div>'+
- '<div class="card"><h3>Сколько времени в день?</h3><div class="timeRow">'+[5,10,15,30].map(x=>'<button class="timeBtn '+(store.minutes===x?"active":"")+'" onclick="store.minutes='+x+';save();english()">'+x+' мин</button>').join("")+'</div></div>'+
- '<div class="card"><h3>Вариант английского</h3><div class="timeRow"><button class="timeBtn '+(store.accent==="UK"?"active":"")+'" onclick="store.accent=\'UK\';save();english()">🇬🇧 UK</button><button class="timeBtn '+(store.accent==="US"?"active":"")+'" onclick="store.accent=\'US\';save();english()">🇺🇸 US</button></div></div>'+
- '<div class="card"><h3>Уровень</h3><div class="tabs">'+["A1","A2","B1","B2","C1"].map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();english()">'+x+'</button>').join("")+'</div></div>'+
+ '<div class="card"><h3>Сколько времени в день?</h3><div class="timeRow">'+[5,10,15,30].map(x=>'<button class="timeBtn '+(store.minutes===x?"active":"")+'" onclick="store.minutes='+x+';save();english()">'+x+' мин</button>').join("")+'</div></div><div class="card"><h3>Уровень</h3><div class="tabs">'+["A1","A2","B1","B2","C1"].map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();english()">'+x+'</button>').join("")+'</div></div>'+
  '<button class="secondary" style="width:100%" onclick="resetProgress()">Сбросить прогресс</button>')
 }
 function setGoal(g){store.goal=g;save();toast("Цель обновлена");english()}
