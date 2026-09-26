@@ -2,15 +2,13 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var lessons: LessonStore
-    @EnvironmentObject private var progress: ProgressStore
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("SpeakFlow")
-                            .font(.largeTitle.bold())
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("SpeakFlow").font(.largeTitle.bold())
                         Text("Listen. Repeat. Speak naturally.")
                             .foregroundStyle(.secondary)
                     }
@@ -22,7 +20,7 @@ struct HomeView: View {
                         NavigationLink {
                             CourseView(course: course)
                         } label: {
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(course.title).font(.headline)
                                 Text("\(course.level) · \(course.lessons.count) lesson")
                                     .font(.caption)
