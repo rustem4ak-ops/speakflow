@@ -125,3 +125,19 @@
 .tutorContinue{width:100%!important;margin-top:6px!important;min-height:43px!important}
 .tutorCompact .recognizedText{font-size:12px!important;margin:2px 0!important}
 .tutorCompact .small{font-size:10px!important}
+
+
+/* SpeakFlow 27 — free-form AI Tutor */
+.tutorHeadRow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.aiStatus{font-size:10px;font-weight:800;padding:5px 8px;border-radius:999px;white-space:nowrap}
+.aiStatus.local{background:#2d2a20;color:#ffd98a}
+.aiStatus.live{background:#1e4033;color:#9af0c2}
+.aiMode{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center;background:#121a2d;border:1px solid #27314b;border-radius:14px;padding:10px 11px;margin-bottom:13px}
+.aiMode .aiDot{width:8px;height:8px;border-radius:50%;background:#6979df;box-shadow:0 0 0 4px rgba(105,121,223,.12);grid-row:1 / span 2}
+.aiMode b{font-size:13px}
+.aiMode small{color:#8995b5;font-size:10px;margin-top:2px}
+.tutorFeedback{font-size:12px;color:#dfe4f2;line-height:1.4;margin:3px 0 5px}
+.tutorAIReply{text-align:left;background:#121a2d;border:1px solid #27314b;border-radius:12px;padding:8px 9px;margin-top:6px;font-size:13px;line-height:1.35}
+.tutorAIReply small{display:block;color:#8995b5;font-size:10px;text-transform:uppercase;margin-bottom:3px}
+.tutorCorrection{text-align:left;background:#2d2520;border:1px solid #4b3a2c;border-radius:12px;padding:8px 9px;margin-top:6px;font-size:11px;line-height:1.35;color:#ffd9a3}
+.tutorCompact .tutorResultCompact .tutorAIReply{font-size:12px}
