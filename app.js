@@ -158,7 +158,7 @@ async function playLessonAudio(text,onDone){
  if(!src){if(onDone)onDone();return}
  stopLessonAudio();
  const token=lessonAudioToken;
- if(isIOS()&&window.AudioContext){
+ if(isIOS()&&(window.AudioContext||window.webkitAudioContext)){
   try{
    lessonAudioContext=lessonAudioContext||new (window.AudioContext||window.webkitAudioContext)();
    await lessonAudioContext.resume();
