@@ -13,16 +13,24 @@
   function esc37(x){return esc(String(x))}
   function q37(x){return JSON.stringify(String(x))}
   function allBank(){return (window.SF37_BANK||[]).slice()}
-  function weakPool(){
-    var r=store.review||{}, now=Date.now();
-    return allBank().filter(function(p){
-      var x=r[p.text];
-      return x && typeof x.best==="number" && x.best<100 && (x.last||x.due||x.attempts);
-    }).sort(function(a,b){
+  function previousPool(){
+    var out=[], seen={}, r=store.review||{};
+    function add(text,theme,level){
+      var x=r[text];
+      if(!x || typeof x.best!=="number" || x.best>=100 || seen[text])return;
+      seen[text]=1;out.push({text:text,theme:theme||"Review",level:level||store.level});
+    }
+    Object.keys(r).forEach(function(text){
+      var legacy=(typeof COURSES!=="undefined"?COURSES:[]).find(function(c){return c.items.some(function(i){return i[0]===text})});
+      var bank=allBank().find(function(p){return p.text===text});
+      if(legacy)add(text,legacy.title,legacy.level);else if(bank)add(text,bank.theme,bank.level);else add(text,"Review",store.level);
+    });
+    return out.sort(function(a,b){
       var ra=r[a.text]||{}, rb=r[b.text]||{};
       return (ra.best||0)-(rb.best||0) || ((ra.last||0)-(rb.last||0));
     }).slice(0,15);
   }
+  function weakPool(){return previousPool()}
   function newPool(c,weak){
     var blocked={}; weak.forEach(function(x){blocked[x.text]=1});
     var arr=allBank().filter(function(p){
