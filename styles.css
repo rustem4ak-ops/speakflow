@@ -49,3 +49,14 @@
 
 /* SpeakFlow 20 — single main audio button */
 .voiceChoices{grid-template-columns:1fr}
+
+
+/* SpeakFlow 21 — polished lesson audio + microphone */
+.primaryVoice{position:relative;overflow:hidden;transition:transform .16s ease,box-shadow .2s ease,filter .16s ease}
+.primaryVoice:active{transform:scale(.97)}
+.primaryVoice::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(110deg,transparent,rgba(255,255,255,.18),transparent);transform:translateX(-120%);transition:transform .55s ease}
+.primaryVoice:active::after,.primaryVoice.isPlaying::after{transform:translateX(120%)}
+.primaryVoice.isPlaying{box-shadow:0 0 0 4px rgba(105,121,223,.16),0 12px 30px rgba(105,121,223,.28);animation:audioPulse 1.15s ease-in-out infinite}
+@keyframes audioPulse{50%{filter:brightness(1.08);transform:translateY(-1px)}}
+.lessonMic{transition:transform .16s ease,box-shadow .2s ease,filter .16s ease}
+.lessonMic:active{transform:scale(.92)!important;filter:brightness(.92)}
