@@ -26,7 +26,7 @@ const COURSES=[
 ];
 const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,accent:"UK",lastDay:""};
 const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}")); store.review=store.review||{};
-let page="today",current=null,lessonPhase=0,lessonScore=null,lessonFinished=false;
+let page="today",current=null,lessonPhase=0,lessonScore=null,lessonFinished=false,lessonTarget="";
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
@@ -155,7 +155,7 @@ function phaseLabel(){
  return ["1. Слушаем","2. Повторяем","3. Говорим"][lessonPhase]||"Тренировка";
 }
 function renderLesson(i,isReview=false){
- const item=current.items[i],text=item[0],tr=item[1];
+ const item=current.items[i],text=item[0],tr=item[1]; lessonTarget=text;
  const progress=Math.round(((i+1)/current.items.length)*100);
  const doneText=lessonFinished?'<div class="resultWord success">✓ Урок завершён</div><div class="small resultHint">Можно перейти к следующему уроку.</div>':'<span class="small">После прослушивания нажми микрофон и повтори фразу.</span>';
  const nextIndex=COURSES.findIndex(c=>c.id===current.id)+1;
@@ -195,8 +195,7 @@ function lessonListenBritish(text){
    if(b&&!lessonFinished)b.innerHTML=lessonMicMarkup(text);
  },900);
 }
-function lessonMicMarkup(text){
- return '<button class="lessonMic" onclick="lessonSpeak(\\''+jsq(text)+'\\')" aria-label="Произнести фразу">🎙️</button><div class="lessonMicText">Теперь нажми микрофон и произнеси фразу</div>';
+function lessonMicMarkup(text){ return '<button class="lessonMic" onclick="lessonSpeak(lessonTarget)" aria-label="Произнести фразу">🎙️</button><div class="lessonMicText">Теперь нажми микрофон и произнеси фразу</div>';
 }
 function lessonSpeak(target){
  const box=document.getElementById("lessonSpeech");
