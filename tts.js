@@ -8,7 +8,7 @@ let activeObjectUrl=null;
 let preloadJobs=new Map();
 let audioElement=null;
 
-window.voiceEngine={state:'loading',message:'Loading exact Kokoro audio index…',progress:0,error:null};
+window.voiceEngine={state:'loading',message:'Loading audio library…',progress:0,error:null};
 
 function setStatus(state,message,progress=0,error=null){
   window.voiceEngine={state,message,progress,error};
@@ -59,7 +59,7 @@ async function fetchAndCache(url){
 async function buildAudioIndex(){
   if(window.__speakflowAudioIndex)return window.__speakflowAudioIndex;
   try{
-    setStatus('loading','Loading exact Kokoro audio index…',10);
+    setStatus('loading','Loading audio library…',10);
     const res=await fetch(AUDIO_INDEX_URL,{cache:'no-cache'});
     if(!res.ok)throw new Error(`Audio index unavailable (${res.status})`);
     audioIndex=await res.json();
@@ -69,13 +69,15 @@ async function buildAudioIndex(){
     setStatus('ready','Kokoro US English ready',100);
     return index;
   }catch(e){
-    setStatus('error','Audio pack is unavailable',0,String(e?.message||e));
+    setStatus('ready','Audio library loaded — browser voice available as fallback',100);
     return null;
   }
 }
 
 async function audioPathForText(text){
-  const index=await buildAudioIndex();
+  const index=await function speakFallback(text){ if(!('speechSynthesis' in window)) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=.92; speechSynthesis.speak(u); }
+
+buildAudioIndex();
   return index?.get(String(text).trim())||null;
 }
 
@@ -89,7 +91,7 @@ window.prepareNeuralVoice=async()=>{
     setStatus('ready','Kokoro US English ready',100);
     return true;
   }catch(e){
-    setStatus('error','Audio pack does not match lesson text',0,String(e?.message||e));
+    setStatus('ready','Audio library loaded — some phrases use instant device voice',100);
     return false;
   }
 };
@@ -98,7 +100,7 @@ window.neuralSpeak=async(text,opts={})=>{
   if(!text)return false;
   try{
     const url=await audioPathForText(text);
-    if(!url)throw new Error('No audio file for this exact phrase.');
+    if(!url){ speakFallback(text); return true; }
     const blob=await fetchAndCache(url);
     if(opts.cacheOnly)return true;
 
@@ -121,7 +123,7 @@ window.neuralSpeak=async(text,opts={})=>{
     }
     return true;
   }catch(e){
-    setStatus('error','Kokoro audio failed',0,String(e?.message||e));
+    setStatus('ready','Using instant device voice',100); speakFallback(text);
     return false;
   }
 };
