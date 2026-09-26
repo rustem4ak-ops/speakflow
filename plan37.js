@@ -220,7 +220,7 @@
     if(z.dialogueScore>=400)xp+=10;
     if(z.newItems.length>=20)xp+=10;
     store.xp=(store.xp||0)+xp;save();
-    shell("<section class='hero sfPlanFinish'><div class='eyebrow'>🎉 Тренировка завершена</div><h1>Отличная работа</h1><p>Ты прошёл весь сегодняшний маршрут: слабые места → новые фразы → диалог.</p><div class='sfFinishStats'><div><b>"+z.weak.length+"</b><span>повторено</span></div><div><b>"+z.newItems.length+"</b><span>новых</span></div><div><b>"+(z.dialogueItems?z.dialogueItems.length:5)+"</b><span>в диалоге</span></div></div><div class='card'><h3>Что дальше?</h3><p class='muted'>Фразы ниже 100% автоматически остаются в базе повторения.</p><button class='primary full' onclick='sfPlanStart()'>🔁 Новая тренировка</button><button class='secondary full' onclick="go('profile')">📊 Посмотреть прогресс</button></div></section>");
+    shell("<section class='hero sfPlanFinish'><div class='eyebrow'>🎉 Тренировка завершена</div><h1>Отличная работа</h1><p>Ты прошёл весь сегодняшний маршрут: слабые места → новые фразы → диалог.</p><div class='sfFinishStats'><div><b>"+z.weak.length+"</b><span>повторено</span></div><div><b>"+z.newItems.length+"</b><span>новых</span></div><div><b>"+(z.dialogueItems?z.dialogueItems.length:5)+"</b><span>в диалоге</span></div></div><div class='card'><h3>Что дальше?</h3><p class='muted'>Фразы ниже 100% автоматически остаются в базе повторения.</p><button class='primary full' onclick='sfPlanStart()'>🔁 Новая тренировка</button><button class='secondary full' onclick=\"go('profile')\">📊 Посмотреть прогресс</button></div></section>");
     window.sfPlan=null;
   }
   window.go=window.go||function(x){page=x;today37()};
