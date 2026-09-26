@@ -1,20 +1,168 @@
-const AUDIO_INDEX_URL='audio/index.json';
-window.voiceEngine={state:'loading',progress:0,error:null,cache:new Map()};
+// SpeakFlow 8.1 — fast static audio engine, based on the proven 6.2/6.3 architecture.
+// All Kokoro speech is generated ahead of time. The iPhone only downloads/plays the file.
+const AUDIO_INDEX_URL='audio/index.json?v=8.1';
+const CACHE_NAME='speakflow-audio-v8.1';
 let audioIndex=null;
-async function loadAudioIndex(){
-  try{ const r=await fetch(AUDIO_INDEX_URL,{cache:'no-cache'}); if(!r.ok) throw new Error('Audio index unavailable'); audioIndex=await r.json(); window.voiceEngine.state='ready'; window.dispatchEvent(new Event('speakflow-voice-status')); return true; }
-  catch(e){ window.voiceEngine.state='error'; window.voiceEngine.error='Run Generate all SpeakFlow 8.0 Kokoro audio in GitHub Actions.'; window.dispatchEvent(new Event('speakflow-voice-status')); return false; }
+let activeAudio=null;
+let activeObjectUrl=null;
+let preloadJobs=new Map();
+let audioElement=null;
+
+window.voiceEngine={state:'loading',message:'Loading exact Kokoro audio index…',progress:0,error:null};
+
+function setStatus(state,message,progress=0,error=null){
+  window.voiceEngine={state,message,progress,error};
+  window.dispatchEvent(new CustomEvent('speakflow-voice-status',{detail:window.voiceEngine}));
 }
-function phraseUrl(text){return audioIndex?.phrases?.[text]||null;}
-async function neuralSpeak(text){
-  if(!audioIndex && !(await loadAudioIndex())) return false;
-  const url=phraseUrl(text); if(!url) return false;
-  try{ let a=window.voiceEngine.cache.get(text); if(!a){a=new Audio(url); a.preload='auto'; window.voiceEngine.cache.set(text,a);} a.pause(); a.currentTime=0; await a.play(); return true; }catch(e){return false;}
+
+function ensureAudioElement(){
+  if(audioElement) return audioElement;
+  audioElement=document.createElement('audio');
+  audioElement.preload='auto';
+  audioElement.setAttribute('playsinline','');
+  audioElement.playsInline=true;
+  audioElement.style.display='none';
+  document.body.appendChild(audioElement);
+  audioElement.addEventListener('ended',()=>{
+    if(activeObjectUrl){URL.revokeObjectURL(activeObjectUrl);activeObjectUrl=null;}
+    activeAudio=null;
+    setStatus('ready','Kokoro US English ready',100);
+  });
+  audioElement.addEventListener('error',()=>{
+    if(activeObjectUrl){URL.revokeObjectURL(activeObjectUrl);activeObjectUrl=null;}
+    activeAudio=null;
+  });
+  return audioElement;
 }
-async function prefetchLessonAudio(phrases,start=0,progress){
-  if(!audioIndex && !(await loadAudioIndex())) throw new Error('index');
-  const texts=phrases.map(p=>Array.isArray(p)?p[0]:p);
-  for(let i=start;i<texts.length;i++){const url=phraseUrl(texts[i]); if(url){const a=new Audio(); a.preload='auto'; a.src=url; try{await new Promise(res=>{a.oncanplaythrough=res;a.onerror=res;setTimeout(res,2500);});}catch(e){} } if(progress)progress(i+1,texts.length);}
+
+async function getCache(){
+  try{return await caches.open(CACHE_NAME);}catch{return null;}
 }
-window.prepareNeuralVoice=loadAudioIndex;
-loadAudioIndex();
+
+async function cachedBlob(url){
+  const c=await getCache();
+  if(!c)return null;
+  try{const r=await c.match(url);return r?r.blob():null;}catch{return null;}
+}
+
+async function fetchAndCache(url){
+  const cached=await cachedBlob(url);
+  if(cached)return cached;
+  const res=await fetch(url,{cache:'no-cache'});
+  if(!res.ok)throw new Error(`Audio file not found (${res.status})`);
+  const blob=await res.blob();
+  const c=await getCache();
+  if(c){try{await c.put(url,new Response(blob,{headers:{'Content-Type':'audio/mpeg'}}));}catch{}}
+  return blob;
+}
+
+async function buildAudioIndex(){
+  if(window.__speakflowAudioIndex)return window.__speakflowAudioIndex;
+  try{
+    setStatus('loading','Loading exact Kokoro audio index…',10);
+    const res=await fetch(AUDIO_INDEX_URL,{cache:'no-cache'});
+    if(!res.ok)throw new Error(`Audio index unavailable (${res.status})`);
+    audioIndex=await res.json();
+    const index=new Map();
+    for(const [phrase,url] of Object.entries(audioIndex.phrases||{})) index.set(phrase.trim(),url);
+    window.__speakflowAudioIndex=index;
+    setStatus('ready','Kokoro US English ready',100);
+    return index;
+  }catch(e){
+    setStatus('error','Audio pack is unavailable',0,String(e?.message||e));
+    return null;
+  }
+}
+
+async function audioPathForText(text){
+  const index=await buildAudioIndex();
+  return index?.get(String(text).trim())||null;
+}
+
+window.prepareNeuralVoice=async()=>{
+  try{
+    const first=window.__speakflowCourses?.[0]?.phrases?.[0]?.[0];
+    if(!first)throw new Error('Course data is not ready.');
+    const url=await audioPathForText(first);
+    if(!url)throw new Error('This lesson text has no matching audio file.');
+    await fetchAndCache(url);
+    setStatus('ready','Kokoro US English ready',100);
+    return true;
+  }catch(e){
+    setStatus('error','Audio pack does not match lesson text',0,String(e?.message||e));
+    return false;
+  }
+};
+
+window.neuralSpeak=async(text,opts={})=>{
+  if(!text)return false;
+  try{
+    const url=await audioPathForText(text);
+    if(!url)throw new Error('No audio file for this exact phrase.');
+    const blob=await fetchAndCache(url);
+    if(opts.cacheOnly)return true;
+
+    const el=ensureAudioElement();
+    if(activeObjectUrl){try{URL.revokeObjectURL(activeObjectUrl);}catch{}activeObjectUrl=null;}
+    try{el.pause();}catch{}
+    const objectUrl=URL.createObjectURL(blob);
+    activeObjectUrl=objectUrl;
+    activeAudio=el;
+    el.src=objectUrl;
+    el.currentTime=0;
+    el.load();
+    try{
+      await el.play();
+    }catch(firstError){
+      // iOS PWA can occasionally keep a stale media element after returning from background.
+      // Reset the same element once; this remains within the user's tap gesture.
+      try{el.pause();el.removeAttribute('src');el.load();el.src=objectUrl;el.load();await el.play();}
+      catch{throw firstError;}
+    }
+    return true;
+  }catch(e){
+    setStatus('error','Kokoro audio failed',0,String(e?.message||e));
+    return false;
+  }
+};
+
+window.prefetchLessonAudio=async(phrases,startIndex=0,onProgress=null)=>{
+  const list=(phrases||[]).map(p=>Array.isArray(p)?p[0]:p).filter(Boolean);
+  const key=list.join('|');
+  if(preloadJobs.has(key))return preloadJobs.get(key);
+  const job=(async()=>{
+    try{
+      const index=await buildAudioIndex();
+      if(!index)throw new Error('Audio index unavailable');
+      // Current phrase first, then the rest of the lesson. This makes the first Listen fast.
+      const ordered=list.slice(Math.max(0,startIndex)).concat(list.slice(0,Math.max(0,startIndex)));
+      const total=list.length;
+      for(let n=0;n<ordered.length;n++){
+        const text=ordered[n],url=index.get(String(text).trim());
+        if(!url)throw new Error(`No audio for: ${text}`);
+        await fetchAndCache(url);
+        if(onProgress)onProgress(Math.min(total,n+1),total);
+        window.dispatchEvent(new CustomEvent('speakflow-audio-prefetch',{detail:{index:n,total}}));
+      }
+      setStatus('ready','Kokoro US English ready',100);
+    }catch(e){
+      setStatus('error','Audio prefetch failed',0,String(e?.message||e));
+      throw e;
+    }finally{preloadJobs.delete(key);}
+  })();
+  preloadJobs.set(key,job);
+  return job;
+};
+
+window.stopNeuralVoice=()=>{
+  try{audioElement?.pause();}catch{}
+  if(activeObjectUrl){try{URL.revokeObjectURL(activeObjectUrl);}catch{}activeObjectUrl=null;}
+  if(audioElement){try{audioElement.removeAttribute('src');audioElement.load();}catch{}}
+  activeAudio=null;
+};
+
+// Recover the media element when an iOS PWA returns from the background.
+window.addEventListener('pageshow',()=>{if(audioElement){try{audioElement.load();}catch{}}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){try{audioElement?.pause();}catch{}}});
+
+buildAudioIndex();
