@@ -10,18 +10,13 @@ struct SpeakView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Text("Repeat the phrase")
-                .font(.title2.bold())
-
-            Text(phrase.english)
-                .font(.title3)
-                .multilineTextAlignment(.center)
+            Text("Repeat the phrase").font(.title2.bold())
+            Text(phrase.english).font(.title3).multilineTextAlignment(.center)
 
             Button {
                 audio.play(assetID: phrase.audio, fallbackText: phrase.english)
             } label: {
-                Image(systemName: "play.circle.fill")
-                    .font(.system(size: 64))
+                Image(systemName: "play.circle.fill").font(.system(size: 64))
             }
 
             Button {
@@ -29,10 +24,7 @@ struct SpeakView: View {
                     recognizer.stop()
                     isRecording = false
                     transcript = recognizer.transcript
-                    result = PronunciationService().score(
-                        reference: phrase.english,
-                        recognized: transcript
-                    )
+                    result = PronunciationService().score(reference: phrase.english, recognized: transcript)
                 } else {
                     transcript = ""
                     result = nil
@@ -45,17 +37,14 @@ struct SpeakView: View {
             }
 
             if !transcript.isEmpty {
-                Text(transcript)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                Text(transcript).font(.subheadline).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
 
             if let result {
                 Text("\(result.percentage)%")
                     .font(.system(size: 56, weight: .bold, design: .rounded))
-                Text("Speaking match")
-                    .foregroundStyle(.secondary)
+                Text("Speaking match").foregroundStyle(.secondary)
             }
 
             Spacer()
