@@ -349,6 +349,35 @@ function tutorNext(){
  if(tutorTurn+1<tutorScenario.turns.length){tutorTurn++;tutorBusy=false;renderTutor()}
  else finishTutor();
 }
+function tutorNaturalReply(got,turn){
+ const text=got.toLowerCase();
+ if(tutorScenario.id==="cafe"){
+  if(/bill|check|pay/.test(text))return "Of course. Here is your bill. Would you like to pay by card or cash?";
+  if(/sandwich|cake|food|eat/.test(text))return "Sure. We have sandwiches, cake and a few hot dishes.";
+  return "Sounds good. What would you like to drink?";
+ }
+ if(tutorScenario.id==="airport"){
+  if(/london|berlin|paris|frankfurt|dubai|moscow/.test(text))return "Great. Do you have any bags to check in?";
+  if(/bag|bags|luggage/.test(text))return "Thank you. Your gate is A24. Boarding starts at six thirty.";
+  return "Thanks. Where are you flying today?";
+ }
+ if(tutorScenario.id==="work"){
+  if(/tomorrow|monday|tuesday|wednesday|thursday|friday/.test(text))return "That works for me. What time would be convenient for you?";
+  if(/nine|ten|eleven|morning|afternoon|three|four|five/.test(text))return "Perfect. I'll send you a calendar invitation.";
+  return "Sure. What would you like to discuss first?";
+ }
+ if(tutorScenario.id==="hotel"){
+  if(/yes|help|luggage|bags/.test(text))return "Of course. I'll ask someone to help you with your luggage.";
+  if(/name|reservation|booking|booked/.test(text))return "Thank you. Your room is on the third floor.";
+  return "Certainly. How can I help you with your stay?";
+ }
+ return turn.reply;
+}
+function tutorCorrection(got,example,score){
+ if(score>=85)return "Отлично — фраза звучит понятно.";
+ if(!got)return "Попробуй ответить полной фразой.";
+ return "Можно естественнее. Пример: “"+example+"”";
+}
 function evaluateTutorAnswer(got){
  const box=document.getElementById("tutorResult");if(!box||!tutorScenario)return;
  const turn=tutorScenario.turns[tutorTurn],example=turn.tip.replace(/^Попробуй:\\s*/,"");
