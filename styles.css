@@ -99,3 +99,29 @@
 .tutorInputRow input::placeholder{color:#77839f}
 .tutorInputRow button{background:#6979df;color:white;border-radius:12px;padding:0 15px;font-weight:800}
 .tutorResult .tutorActions{margin-top:12px}
+
+/* SpeakFlow 26 — compact one-screen AI Tutor */
+.tutorCompact{padding:14px 14px 12px}
+.tutorCompact .eyebrow{margin-bottom:6px}
+.tutorCompact .tutorProgress{margin:5px 0 10px}
+.tutorBubble{margin:8px 0 7px!important;padding:11px 13px!important}
+.tutorBubble small{font-size:11px!important}
+.tutorBubble div{font-size:17px!important;line-height:1.28!important}
+.tutorListenRow{margin:6px 0!important;gap:7px!important}
+.tutorListenRow button{padding:9px 10px!important;min-height:40px!important;font-size:13px!important}
+.tutorSlow{flex:0 0 auto!important;width:auto!important}
+.tutorHintCompact{margin:6px 0!important;padding:7px 9px!important;font-size:12px!important;line-height:1.25!important}
+.tutorMicCompact{width:100%!important;height:50px!important;min-height:50px!important;margin:7px 0 6px!important;border-radius:14px!important}
+.tutorMicCompact small{font-size:13px!important}
+.tutorManualCompact{margin:5px 0!important}
+.tutorManualCompact .tutorInputRow{height:42px}
+.tutorManualCompact input{padding:9px 11px!important;height:42px!important}
+.tutorManualCompact button{width:45px!important;padding:0!important}
+.tutorResultCompact{min-height:30px!important;margin:6px 0!important;padding:7px 9px!important;font-size:12px!important}
+.tutorResultCompact .resultScore{font-size:20px!important;margin:2px 0!important}
+.tutorResultCompact .feedbackBox{margin-top:5px!important;padding:6px 8px!important}
+.tutorResultCompact .feedbackStats,.tutorResultCompact .feedbackLine{font-size:11px!important;margin:2px 0!important}
+.tutorResultCompact .tutorActions{display:none!important}
+.tutorContinue{width:100%!important;margin-top:6px!important;min-height:43px!important}
+.tutorCompact .recognizedText{font-size:12px!important;margin:2px 0!important}
+.tutorCompact .small{font-size:10px!important}
