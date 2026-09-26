@@ -144,3 +144,6 @@
 
 /* SpeakFlow 29 — adaptive tutor */
 .tutorHeadRow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.aiMode{display:inline-block;margin-top:4px;font-size:11px;color:#9af0c2;background:#1e4033;padding:4px 7px;border-radius:999px}.tutorFeedback{margin-top:8px;padding:10px;border-radius:13px;background:#121a2d;border:1px solid #27314b;line-height:1.45}.tutorFeedback b{display:block;margin-bottom:3px}.tutorAIReply{margin-top:8px;padding:10px;border-radius:13px;background:#18213a;border:1px solid #304066;text-align:left;line-height:1.45}.tutorAIReply small{display:block;color:#8995b5;margin-bottom:3px}
+
+/* SpeakFlow 31 */
+.tutorSpeakAI{margin-top:8px;width:100%;font-size:12px;padding:8px}.tutorAIReply{transition:transform .15s ease}.tutorAIReply:active{transform:scale(.99)}
