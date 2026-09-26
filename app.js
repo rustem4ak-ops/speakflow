@@ -38,6 +38,31 @@ function setAudio(text,autoplay=true){
  if(st)st.textContent="Аудио готово.";
  if(autoplay){const q=p.play();if(q&&q.catch)q.catch(()=>{if(st)st.textContent="Нажмите ▶ Play на плеере."})}
 }
+
+let voices=[];
+function loadVoices(){voices=window.speechSynthesis?window.speechSynthesis.getVoices():[]}
+if("speechSynthesis" in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged=loadVoices;
+}
+function speakEnglish(text){
+  if(!("speechSynthesis" in window)){
+    setAudio(text,true);
+    return;
+  }
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=store.accent==="US"?"en-US":"en-GB";
+  u.rate=0.95;
+  u.pitch=1;
+  const wanted=store.accent==="US"?["en-US","en_US"]:["en-GB","en_GB","en"];
+  const v=voices.find(x=>wanted.includes(x.lang));
+  if(v)u.voice=v;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+  const st=document.getElementById("audioStatus");
+  if(st)st.textContent=(v?"English voice: "+v.name:"English voice selected by phone");
+}
+
 function nav(){
  const items=[["today","☀️","Сегодня"],["learn","📚","Учиться"],["speak","🎙️","Говорить"],["english","🧠","Мой English"]];
  return '<div class="nav"><div class="navin">'+items.map(x=>'<button onclick="go(\''+x[0]+'\')" class="'+(page===x[0]?"active":"")+'">'+x[1]+'<small>'+x[2]+'</small></button>').join("")+'</div></div>'
@@ -63,7 +88,7 @@ function learn(){
 function openCourse(id){current=COURSES.find(c=>c.id===id);renderLesson(0)}
 function renderLesson(i){
  const text=current.items[i][0],tr=current.items[i][1],done=store.done.includes(text);
- shell('<button class="back" onclick="go(\'learn\')">← К урокам</button><div class="card"><div class="eyebrow">'+current.level+' · '+current.title+'</div><div class="small" style="margin-top:7px">Фраза '+(i+1)+' из '+current.items.length+'</div><div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div><div class="audioBox"><audio id="player" controls preload="auto" src="'+(AUDIO[text]||"")+'"></audio><div class="row" style="margin-top:10px"><button class="secondary" onclick="playRate(0.75)">🐢 Медленно</button><button class="secondary" onclick="playRate(1)">▶ Нормально</button><button class="secondary" onclick="playRate(1.15)">⚡ Быстро</button></div><div id="audioStatus" class="status">'+(AUDIO[text]?"Аудио готово.":"Аудио пока не добавлено.")+'</div></div><button class="primary" onclick="markDone('+i+')">'+(done?"✓ Повторить и продолжить":"Я выучил эту фразу")+'</button></div>')
+ shell('<button class="back" onclick="go(\'learn\')">← К урокам</button><div class="card"><div class="eyebrow">'+current.level+' · '+current.title+'</div><div class="small" style="margin-top:7px">Фраза '+(i+1)+' из '+current.items.length+'</div><div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div><div class="audioBox"><audio id="player" controls preload="auto" src="'+(AUDIO[text]||"")+'"></audio><div class="row" style="margin-top:10px"><button class="secondary" onclick="playRate(0.75)">🐢 Медленно</button><button class="secondary" onclick="playRate(1)">▶ Нормально</button><button class="secondary" onclick="playRate(1.15)">⚡ Быстро</button></div><div id="audioStatus" class="status">'+(AUDIO[text]?"Аудио готово.":"Аудио пока не добавлено.")+'</div></div><button class="primary" onclick="speakEnglish(\''+jsq(text)+'\')">🔊 Повторить английскую фразу</button><button class="primary" onclick="markDone('+i+')">'+(done?"✓ Повторить и продолжить":"Я выучил эту фразу")+'</button></div>')
 }
 function playRate(rate){const p=audioEl();if(!p)return;p.playbackRate=rate;p.currentTime=0;const q=p.play();if(q&&q.catch)q.catch(()=>{})}
 function markDone(i){
