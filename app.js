@@ -13,16 +13,16 @@ const AUDIO={
 "I see your point, but I am not sure the data supports that conclusion.":"audio/phrase-5354fed232600459.wav"
 };
 const COURSES=[
-{id:1,level:"A1",title:"Travel basics",icon:"✈️",goal:"travel",desc:"Самые нужные фразы для поездки.",items:[
-["Could I see your passport, please?","Могу я посмотреть ваш паспорт, пожалуйста?"],["What time does boarding start?","Во сколько начинается посадка?"],["Could you help me, please?","Не могли бы вы мне помочь, пожалуйста?"]]},
-{id:2,level:"A2",title:"Restaurant & shopping",icon:"🍽️",goal:"daily",desc:"Разговоры в ресторане и магазине.",items:[
-["Could I have a table for two?","Можно столик на двоих?"],["What do you recommend?","Что вы рекомендуете?"],["How much does this cost?","Сколько это стоит?"]]},
-{id:3,level:"B1",title:"Everyday conversation",icon:"💬",goal:"conversation",desc:"Свободнее говорим о себе и жизни.",items:[
-["How is your day going?","Как проходит ваш день?"],["What do you do for work?","Кем вы работаете?"],["Could we move the meeting to tomorrow?","Можем перенести встречу на завтра?"]]},
-{id:4,level:"B2",title:"Study & work",icon:"💼",goal:"work",desc:"Фразы для работы и учёбы.",items:[
-["I would like to discuss my study plan with you.","Я хотел бы обсудить с вами мой учебный план."],["From my perspective, the main issue is the lack of clear priorities.","С моей точки зрения, главная проблема — отсутствие чётких приоритетов."]]},
-{id:5,level:"C1",title:"Advanced discussion",icon:"🧠",goal:"work",desc:"Продвинутая английская речь.",items:[
-["I see your point, but I am not sure the data supports that conclusion.","Я понимаю вашу точку зрения, но не уверен, что данные подтверждают этот вывод."]]}
+{id:1,level:"A1",title:"Travel & everyday basics",icon:"✈️",goal:"travel",desc:"Базовые фразы для поездок и обычных ситуаций.",items:[
+["Could I see your passport, please?","Могу я посмотреть ваш паспорт, пожалуйста?"],["What time does boarding start?","Во сколько начинается посадка?"],["Could you help me, please?","Не могли бы вы мне помочь, пожалуйста?"],["Where is the nearest station?","Где ближайшая станция?"],["How much is a ticket to the city centre?","Сколько стоит билет до центра города?"],["I'd like a window seat, please.","Я бы хотел место у окна, пожалуйста."],["Where can I find the taxi stand?","Где я могу найти стоянку такси?"],["Could you speak more slowly, please?","Не могли бы вы говорить помедленнее?"],["I don't understand. Could you repeat that?","Я не понимаю. Не могли бы вы повторить?"],["What time does the shop open?","Во сколько открывается магазин?"],["Can I pay by card?","Можно оплатить картой?"],["I'm looking for this address.","Я ищу этот адрес."]]},
+{id:2,level:"A2",title:"Restaurant, shopping & city",icon:"🍽️",goal:"daily",desc:"Уверенно общаемся в кафе, магазинах и городе.",items:[
+["Could I have a table for two?","Можно столик на двоих?"],["What do you recommend?","Что вы рекомендуете?"],["How much does this cost?","Сколько это стоит?"],["I'd like a coffee with milk, please.","Я бы хотел кофе с молоком, пожалуйста."],["Could I have the bill, please?","Можно счёт, пожалуйста?"],["Do you have this in a different size?","У вас есть это в другом размере?"],["I'm just looking, thank you.","Я просто смотрю, спасибо."],["Could I try this on?","Можно это примерить?"],["Where are the changing rooms?","Где примерочные?"],["Is there a pharmacy nearby?","Здесь рядом есть аптека?"],["Could you show me on the map?","Можете показать мне на карте?"],["I'd like to order this to go.","Я хотел бы взять это с собой."]]},
+{id:3,level:"B1",title:"Everyday conversation",icon:"💬",goal:"conversation",desc:"Говорим о себе, планах, людях и повседневной жизни.",items:[
+["How is your day going?","Как проходит ваш день?"],["What do you do for work?","Кем вы работаете?"],["Could we move the meeting to tomorrow?","Можем перенести встречу на завтра?"],["What have you been up to lately?","Чем ты занимался в последнее время?"],["What do you usually do at weekends?","Что ты обычно делаешь по выходным?"],["I'm thinking about changing my routine.","Я думаю изменить свой распорядок."],["That sounds like a good idea.","Звучит как хорошая идея."],["I'm not sure yet, but I'll let you know.","Я пока не уверен, но дам тебе знать."],["How long have you lived here?","Как давно ты здесь живёшь?"],["What was the best part of your week?","Что было лучшим за твою неделю?"],["I'd rather stay home tonight.","Я бы предпочёл сегодня остаться дома."],["Let's keep in touch.","Давай будем на связи."]]},
+{id:4,level:"B2",title:"Work, study & meetings",icon:"💼",goal:"work",desc:"Рабочие встречи, планы, задачи и аргументы.",items:[
+["I would like to discuss my study plan with you.","Я хотел бы обсудить с вами мой учебный план."],["From my perspective, the main issue is the lack of clear priorities.","С моей точки зрения, главная проблема — отсутствие чётких приоритетов."],["Could we go over the main points again?","Можем ещё раз пройтись по основным пунктам?"],["I think we should focus on the most urgent tasks first.","Думаю, нам стоит сначала сосредоточиться на самых срочных задачах."],["Could you send me the details by email?","Можете прислать мне детали по электронной почте?"],["I'd like to make sure we're on the same page.","Я хочу убедиться, что мы одинаково понимаем ситуацию."],["What would be the best way to approach this?","Как лучше всего к этому подойти?"],["We may need to reconsider the timeline.","Возможно, нам нужно пересмотреть сроки."],["I'll get back to you by the end of the day.","Я свяжусь с вами до конца дня."],["Let's schedule a follow-up meeting next week.","Давайте назначим следующую встречу на следующую неделю."],["I agree with the general idea, but I have one concern.","Я согласен с общей идеей, но у меня есть одно замечание."],["Could you clarify what you mean by that?","Можете уточнить, что вы имеете в виду?"]]},
+{id:5,level:"C1",title:"Advanced discussion",icon:"🧠",goal:"work",desc:"Естественная аргументация, нюансы и сложные темы.",items:[
+["I see your point, but I am not sure the data supports that conclusion.","Я понимаю вашу точку зрения, но не уверен, что данные подтверждают этот вывод."],["There are several factors we need to take into account.","Нам нужно учитывать несколько факторов."],["I'd argue that the long-term benefits outweigh the initial costs.","Я бы сказал, что долгосрочные преимущества перевешивают первоначальные затраты."],["That raises an important question about how we measure success.","Это поднимает важный вопрос о том, как мы измеряем успех."],["I'm open to the idea, provided that we can manage the risks.","Я открыт к этой идее при условии, что мы сможем контролировать риски."],["It's worth considering an alternative approach before making a final decision.","Стоит рассмотреть альтернативный подход перед окончательным решением."],["The evidence suggests that the situation is more complex than it appears.","Данные показывают, что ситуация сложнее, чем кажется."],["We need to distinguish between short-term pressure and long-term priorities.","Нам нужно различать краткосрочное давление и долгосрочные приоритеты."],["I wouldn't necessarily draw the same conclusion from those results.","Я бы не обязательно сделал такой же вывод из этих результатов."],["Let's look at the issue from a different perspective.","Давайте посмотрим на этот вопрос с другой точки зрения."],["There is a strong case for investing more in practical training.","Есть веские основания больше инвестировать в практическое обучение."],["Ultimately, the decision depends on what we are trying to achieve.","В конечном счёте решение зависит от того, чего мы пытаемся добиться."]]}
 ];
 const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,accent:"UK",lastDay:""};
 const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}")); store.review=store.review||{};
@@ -82,7 +82,12 @@ function smartReviewCard(){
 function audioEl(){return document.getElementById("player")||document.getElementById("lessonPlayer")}
 function setAudio(text,autoplay=true){
  const p=audioEl(),st=document.getElementById("audioStatus"),src=AUDIO[text];
- if(!p||!src){if(st)st.textContent="Для этой фразы аудио ещё не добавлено.";return}
+ if(!src){
+  if(st)st.textContent="Для новой фразы используется озвучка браузера.";
+  if(autoplay&&"speechSynthesis" in window){window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=.9;window.speechSynthesis.speak(u)}
+  return;
+ }
+ if(!p){if(st)st.textContent="Аудио недоступно.";return}
  p.src=src;p.load();
  if(st)st.textContent="Аудио готово.";
  if(autoplay){const q=p.play();if(q&&q.catch)q.catch(()=>{if(st)st.textContent="Нажмите ▶ Play на плеере."})}
@@ -107,7 +112,7 @@ function jsq(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
 function learn(){
  const levels=["A1","A2","B1","B2","C1"];
  shell('<div class="tabs">'+levels.map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();learn()">'+x+'</button>').join("")+'</div>'+
- '<section class="hero"><div class="eyebrow">Обучение</div><h1>Говорим фразами</h1><p>Слушай → повторяй → говори без подсказки. Сложность поднимается постепенно.</p></section>'+
+ '<section class="hero"><div class="eyebrow">Обучение</div><h1>Говорим фразами</h1><p>Слушай → повторяй → говори без подсказки. Теперь в каталоге 60 учебных фраз.</p></section>'+
  COURSES.filter(c=>c.level===store.level).map(c=>'<div class="card course"><div class="courseIcon">'+c.icon+'</div><div style="flex:1"><h3>'+c.title+'</h3><div class="muted">'+c.desc+'</div><div class="small" style="margin-top:6px">'+c.items.filter(x=>store.done.includes(x[0])).length+'/'+c.items.length+' фраз изучено</div><button class="secondary" style="margin-top:10px" onclick="openCourse('+c.id+')">Открыть</button></div></div>').join(""))
 }
 function openCourse(id){
@@ -157,7 +162,11 @@ function stopLessonAudio(){
 }
 async function playLessonAudio(text,onDone){
  const src=AUDIO[text];
- if(!src){if(onDone)onDone();return}
+ if(!src){
+  if("speechSynthesis" in window){window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=.9;u.onend=()=>{if(onDone)onDone()};window.speechSynthesis.speak(u)}
+  else if(onDone)onDone();
+  return;
+ }
  stopLessonAudio();
  const token=lessonAudioToken;
  if(isIOS()&&(window.AudioContext||window.webkitAudioContext)){
@@ -305,7 +314,19 @@ const TUTOR_SCENARIOS=[
    {keys:["yes","reservation","booking","booked"],reply:"Great. Could I have your name, please?",tip:"Попробуй: The reservation is under Rustem."},
    {keys:["name","rustem","under"],reply:"Thank you. Your room is on the third floor. Do you need any help with your luggage?",tip:"Попробуй: Yes, please."},
    {keys:["yes","help","no","thanks","thank"],reply:"You're welcome. Enjoy your stay!",tip:"Попробуй: Thank you very much."}
- ]}
+,
+ {id:"taxi",icon:"🚕",title:"В такси",desc:"Доедь до нужного места и уточни маршрут.",role:"Driver",opening:"Hi! Where would you like to go?",turns:[
+ {keys:["hotel","station","airport","centre","center"],reply:"Sure. Do you have a preferred route?",tip:"Попробуй: Please take me to the city centre."},{keys:["fast","quick","route","traffic","prefer"],reply:"No problem. It may take about twenty minutes.",tip:"Попробуй: That's fine, thank you."},{keys:["thank","fine","okay","great"],reply:"Here we are. That will be twenty euros.",tip:"Попробуй: Can I pay by card?"}]},
+ {id:"doctor",icon:"🩺",title:"У врача",desc:"Опиши простую проблему и задай вопрос.",role:"Doctor",opening:"Hello. What seems to be the problem?",turns:[
+ {keys:["pain","hurt","headache","stomach","sick","feel"],reply:"I see. How long have you felt like this?",tip:"Попробуй: I've felt like this since yesterday."},{keys:["yesterday","today","week","days","hours"],reply:"Thank you. Do you have a fever or any other symptoms?",tip:"Попробуй: I have a slight fever."},{keys:["fever","cough","tired","no","yes"],reply:"Okay. I'll explain what you can do next.",tip:"Попробуй: Thank you, doctor."}]},
+ {id:"supermarket",icon:"🛒",title:"В супермаркете",desc:"Найди товар, уточни цену и оплати покупку.",role:"Shop assistant",opening:"Hello. Can I help you find something?",turns:[
+ {keys:["milk","bread","water","cheese","looking"],reply:"Sure. It's in aisle five, on the left.",tip:"Попробуй: Thank you. Where is the bread?"},{keys:["bread","price","cost","five"],reply:"The bread is two euros. Would you like anything else?",tip:"Попробуй: Yes, I also need some milk."},{keys:["milk","yes","no","nothing"],reply:"All right. You can pay at the checkout over there.",tip:"Попробуй: Great, thank you."}]},
+ {id:"apartment",icon:"🏠",title:"Аренда квартиры",desc:"Спроси о квартире, цене и условиях.",role:"Landlord",opening:"Hi. Are you interested in the apartment?",turns:[
+ {keys:["yes","interested","apartment","flat"],reply:"Great. How long are you planning to stay?",tip:"Попробуй: I'm planning to stay for a year."},{keys:["year","months","month","long"],reply:"The rent is one thousand euros per month, excluding utilities.",tip:"Попробуй: Are utilities included?"},{keys:["utilities","included","rent","price"],reply:"Water is included, but electricity is separate.",tip:"Попробуй: I see. When can I move in?"}]},
+ {id:"job",icon:"👔",title:"Собеседование",desc:"Расскажи о себе и своём опыте.",role:"Interviewer",opening:"Good morning. Could you tell me a little about yourself?",turns:[
+ {keys:["work","experience","years","company","job"],reply:"Thanks. What would you say is your strongest skill?",tip:"Попробуй: I'm good at solving problems."},{keys:["problem","communication","organizing","team","learning","skill"],reply:"That's useful. Can you give me a quick example?",tip:"Попробуй: In my last job, I solved a difficult problem."},{keys:["last","example","solved","project","team"],reply:"Thank you. Do you have any questions for me?",tip:"Попробуй: Yes. What does a typical day look like?"}]},
+ {id:"friends",icon:"🎉",title:"Встреча с друзьями",desc:"Познакомься, предложи план и поддержи разговор.",role:"Friend",opening:"Hey! What are you doing this evening?",turns:[
+ {keys:["nothing","free","home","tonight","evening"],reply:"Nice! Do you want to grab something to eat?",tip:"Попробуй: Sure, that sounds great."},{keys:["sure","great","yes","eat","dinner"],reply:"How about seven at the Italian place near the station?",tip:"Попробуй: Seven works for me."},{keys:["seven","works","okay","fine"],reply:"Perfect. See you there!",tip:"Попробуй: See you later!"}]} ]}
 ];
 
 function tutor(){
