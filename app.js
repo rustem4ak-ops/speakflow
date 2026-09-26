@@ -28,7 +28,8 @@ const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,a
 const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}")); store.review=store.review||{};
 let page="today",current=null,lessonPhase=0,lessonScore=null,lessonFinished=false,lessonTarget="";
 let lessonAudioContext=null,lessonAudioSource=null,lessonAudioToken=0,lessonRecognition=null;
-let tutorScenario=null,tutorTurn=0,tutorScore=0,tutorBusy=false;
+let tutorScenario=null,tutorTurn=0,tutorScore=0,tutorBusy=false,tutorMessages=[];
+const AI_TUTOR_ENDPOINT=(location.hostname.endsWith("vercel.app")?"/api/tutor":"");
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
@@ -311,7 +312,7 @@ function tutor(){
  shell('<section class="hero"><div class="eyebrow">AI Tutor · Speaking</div><h1>Поговорим по-английски</h1><p>Выбери ситуацию и веди диалог голосом. Приложение будет давать подсказки и оценивать твои реплики.</p></section><div class="card"><h3>Выбери ситуацию</h3>'+cards+'</div><div class="card"><div class="eyebrow">Твой уровень</div><p class="muted">'+store.level+' · '+goalName(store.goal)+'</p></div>');
 }
 function startTutor(id){
- tutorScenario=TUTOR_SCENARIOS.find(x=>x.id===id);tutorTurn=0;tutorScore=0;tutorBusy=false;
+ tutorScenario=TUTOR_SCENARIOS.find(x=>x.id===id);tutorTurn=0;tutorScore=0;tutorBusy=false;tutorMessages=[];
  renderTutor();
 }
 function renderTutor(){
@@ -378,10 +379,34 @@ function tutorCorrection(got,example,score){
  if(!got)return "Попробуй ответить полной фразой.";
  return "Можно естественнее. Пример: “"+example+"”";
 }
-function evaluateTutorAnswer(got){
+async function evaluateTutorAnswer(got){
  const box=document.getElementById("tutorResult");if(!box||!tutorScenario)return;
  const turn=tutorScenario.turns[tutorTurn];
  const example=turn.tip.replace(/^Попробуй:\\s*/,"").trim();
+ box.innerHTML='<span class="listeningPulse">🧠 Анализирую ответ…</span>';
+ tutorBusy=true;
+ if(AI_TUTOR_ENDPOINT){
+  try{
+   const response=await fetch(AI_TUTOR_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    level:store.level,goal:store.goal,scenario:tutorScenario.title,turn:tutorCurrentLine(),userText:got,messages:tutorMessages
+   })});
+   if(response.ok){
+    const ai=await response.json();
+    const score=Math.max(0,Math.min(100,Number(ai.score)||0));
+    tutorScore+=score;
+    tutorMessages.push({role:"user",content:got},{role:"assistant",content:ai.reply||""});
+    box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Понятно":"↻ Можно улучшить")+'</div>'+
+    '<div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+
+    (ai.correction?'<div class="tutorFeedback"><b>✏️ Исправление</b><div>'+esc(ai.correction)+'</div></div>':"")+
+    '<div class="tutorAIReply"><small>'+esc(tutorScenario.role)+' · AI Tutor</small><div>'+esc(ai.reply||"Tell me more.")+'</div></div>'+
+    (ai.suggestion?'<div class="tutorFeedback"><b>💡 Естественнее</b><div>'+esc(ai.suggestion)+'</div></div>':"")+
+    '<div class="small">Настоящий AI анализирует смысл ответа и контекст диалога.</div>';
+    tutorBusy=false;
+    const next=document.getElementById("tutorNextBtn");if(next)next.style.display="block";
+    return;
+   }
+  }catch(e){}
+ }
  const keysHit=turn.keys.some(k=>got.toLowerCase().includes(k.toLowerCase()));
  const base=similarity(example,got);
  const score=Math.min(98,Math.max(45,keysHit?Math.max(78,base):base));
@@ -391,12 +416,11 @@ function evaluateTutorAnswer(got){
  box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Понятно":"↻ Можно улучшить")+'</div>'+
  '<div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+
  '<div class="tutorFeedback"><b>💬 Обратная связь</b><div>'+esc(correction)+'</div></div>'+
- '<div class="tutorAIReply"><small>'+tutorScenario.role+'</small><div>'+esc(reply)+'</div></div>'+
+ '<div class="tutorAIReply"><small>'+tutorScenario.role+' · адаптивный режим</small><div>'+esc(reply)+'</div></div>'+
  feedbackHtml(example,got)+
- '<div class="small">Адаптивная оценка: учитываются слова и совпадение с задачей. Это ещё не полноценная смысловая AI-модель.</div>';
+ '<div class="small">Сейчас используется адаптивный режим. На сервере с AI Tutor анализ будет смысловым.</div>';
  tutorBusy=false;
- const next=document.getElementById("tutorNextBtn");
- if(next)next.style.display="block";
+ const next=document.getElementById("tutorNextBtn");if(next)next.style.display="block";
 }
 async function tutorSpeak(){
  if(tutorBusy)return;
