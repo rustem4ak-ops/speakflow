@@ -1,5 +1,5 @@
-const SHELL='speakflow-shell-v8.1';
-const AUDIO='speakflow-audio-v8.1';
+const SHELL='speakflow-shell-v9.0';
+const AUDIO='speakflow-audio-v9.0';
 const SHELL_FILES=['./','index.html','app.js','tts.js','data.json','manifest.json','audio/index.json'];
 
 self.addEventListener('install',event=>event.waitUntil(
