@@ -100,10 +100,10 @@
     var c=cfg();
     var levels=LEVELS.map(function(l){return "<button class='sfSetLevel "+(l===c.level?"on":"")+"' onclick='sfSetLevel("+q37(l)+")'>"+l+"</button>"}).join("");
     var opts=THEMES.map(function(t){return "<option value="+q37(t)+" "+(t===c.theme?"selected":"")+">"+esc37(themeLabel(t))+"</option>"}).join("");
-    shell("<div class='lessonTop'><button class='back' onclick="go('today')">← План на сегодня</button></div>"+
+    shell("<div class='lessonTop'><button class='back' onclick=\"go('today')\">← План на сегодня</button></div>"+
       "<div class='card sfSettings'><div class='eyebrow'>⚙️ Настройки тренировки</div><h2>Что будем учить?</h2><p class='muted'>Выбери уровень и тематику. Если выбрать «Рандомные темы», новые фразы будут смешаны.</p>"+
       "<h4>Уровень</h4><div class='sfSetLevels'>"+levels+"</div><h4>Тематика</h4><select id='sfTheme37' class='sfThemeSelect' onchange='sfSetTheme(this.value)'>"+opts+"</select>"+
-      "<button class='primary full' onclick="go('today')">Готово</button></div>");
+      "<button class='primary full' onclick=\"go('today')\">Готово</button></div>");
   };
   window.sfSetLevel=function(l){var c=cfg();c.level=l;store.level=l;saveCfg(c);save();sfPlanSettings()};
   window.sfSetTheme=function(t){var c=cfg();c.theme=t;saveCfg(c);sfPlanSettings()};
@@ -131,7 +131,7 @@
     var pct=Math.round(done/Math.max(1,total)*100), label=z.phase==="weak"?"Повторение слабых мест":"Новые фразы";
     window.sfPlanListen=function(){speak37(it.text,1)};
     window.sfPlanMic=function(){listenPlan37(it)};
-    shell("<div class='lessonTop'><button class='back' onclick="go('today')">✕ Выйти</button><span class='lessonCount'>"+label+" · "+(z.phase==="weak"?z.index+1:z.index+1)+" / "+(z.phase==="weak"?z.weak.length:z.newItems.length)+"</span></div>"+
+    shell("<div class='lessonTop'><button class='back' onclick=\"go('today')\">✕ Выйти</button><span class='lessonCount'>"+label+" · "+(z.phase==="weak"?z.index+1:z.index+1)+" / "+(z.phase==="weak"?z.weak.length:z.newItems.length)+"</span></div>"+
       "<div class='card sfPlanLesson'><div class='sfPlanPhase'><b>"+esc37(label)+"</b><span>"+pct+"% блока</span></div><div class='miniMeter'><i style='width:"+pct+"%'></i></div>"+
       "<div class='sfPlanTheme'>"+esc37(it.theme)+" · "+esc37(it.level)+"</div><div class='sfPlanPhrase'>"+esc37(it.text)+"</div><button class='sfPlanListen' onclick='sfPlanListen()'>🔊 Послушать</button>"+
       "<button class='sfPlanMic' onclick='sfPlanMic()'>🎙️ Сказать фразу<small>Нажми и произнеси её</small></button><div id='sfPlanResult' class='sfPlanResult'>Готов? Сначала послушай, затем скажи фразу.</div></div>");
@@ -187,7 +187,7 @@
     var prompt=arr[z.dialogueIndex]||arr[0];
     window.sfDialogueListen=function(){speak37(prompt,0.95)};
     window.sfDialogueMic=function(){listenDialogue37(it,prompt)};
-    shell("<div class='lessonTop'><button class='back' onclick="go('today')">✕ Выйти</button><span class='lessonCount'>Диалог · "+(z.dialogueIndex+1)+" / 5</span></div>"+
+    shell("<div class='lessonTop'><button class='back' onclick=\"go('today')\">✕ Выйти</button><span class='lessonCount'>Диалог · "+(z.dialogueIndex+1)+" / 5</span></div>"+
       "<div class='card sfDialogueCard'><div class='sfPlanPhase'><b>🗣️ Мини-диалог</b><span>закрепляем фразы</span></div><div class='miniMeter'><i style='width:"+(z.dialogueIndex/5*100)+"%'></i></div>"+
       "<div class='sfDialogueRole'>Ситуация · "+esc37(theme)+"</div><div class='sfDialoguePrompt'>"+esc37(prompt)+"</div><button class='sfPlanListen' onclick='sfDialogueListen()'>🔊 Послушать ситуацию</button>"+
       "<div class='sfDialogueTarget'>💡 Попробуй использовать:<b>"+esc37(it.text)+"</b></div>"+
