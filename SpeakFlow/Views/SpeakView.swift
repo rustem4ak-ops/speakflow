@@ -1,6 +1,4 @@
 import SwiftUI
-import Speech
-import AVFoundation
 
 struct SpeakView: View {
     let phrase: Phrase
@@ -12,12 +10,16 @@ struct SpeakView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Text("Repeat the phrase").font(.title2.bold())
+            Text("Repeat the phrase")
+                .font(.title2.bold())
+
             Text(phrase.english)
                 .font(.title3)
                 .multilineTextAlignment(.center)
 
-            Button { audio.play(assetID: phrase.audio, fallbackText: phrase.english) } label: {
+            Button {
+                audio.play(assetID: phrase.audio, fallbackText: phrase.english)
+            } label: {
                 Image(systemName: "play.circle.fill")
                     .font(.system(size: 64))
             }
@@ -27,8 +29,13 @@ struct SpeakView: View {
                     recognizer.stop()
                     isRecording = false
                     transcript = recognizer.transcript
-                    result = PronunciationService().score(reference: phrase.english, recognized: transcript)
+                    result = PronunciationService().score(
+                        reference: phrase.english,
+                        recognized: transcript
+                    )
                 } else {
+                    transcript = ""
+                    result = nil
                     recognizer.start()
                     isRecording = true
                 }
@@ -55,5 +62,11 @@ struct SpeakView: View {
         }
         .padding()
         .navigationTitle("Speak")
+        .onDisappear {
+            if isRecording {
+                recognizer.stop()
+                isRecording = false
+            }
+        }
     }
 }
