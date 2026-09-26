@@ -186,7 +186,7 @@ function lessonSpeak(target){
  r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
  r.start();
 }
-function finishPhrase(i,isReview){ const text=current.items[i][0]; if(lessonScore!==null)scheduleReview(text,lessonScore); if(isReview){save();toast("Результат сохранён");go("today");return;} markDone(i); }
+function finishPhrase(i,isReview){ const text=current.items[i][0]; if(isReview){if(lessonScore!==null)scheduleReview(text,lessonScore);save();toast("Результат сохранён");go("today");return;} markDone(i); }
 function markDone(i){
  const text=current.items[i][0];
  if(lessonScore!==null)scheduleReview(text,lessonScore);
