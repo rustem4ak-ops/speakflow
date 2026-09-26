@@ -53,7 +53,7 @@ function today(){
  '<div class="card"><div class="eyebrow">Прогресс курса</div><div style="display:flex;justify-content:space-between;margin:8px 0 9px"><b>'+pct+'%</b><span class="small">'+done+' / '+total+'</span></div><div class="meter"><i style="width:'+pct+'%"></i></div></div>')
 }
 function goalName(g){return {travel:"Цель: путешествия",work:"Цель: работа и учёба",conversation:"Цель: свободное общение",daily:"Цель: повседневная жизнь"}[g]||"Цель: английский"}
-function jsq(s){return s.replace(/\/g,"\\").replace(/'/g,"\\'")}
+function jsq(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
 function learn(){
  const levels=["A1","A2","B1","B2","C1"];
  shell('<div class="tabs">'+levels.map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();learn()">'+x+'</button>').join("")+'</div>'+
