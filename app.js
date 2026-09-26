@@ -28,6 +28,7 @@ const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,a
 const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}")); store.review=store.review||{};
 let page="today",current=null,lessonPhase=0,lessonScore=null,lessonFinished=false,lessonTarget="";
 let lessonAudioContext=null,lessonAudioSource=null,lessonAudioToken=0,lessonRecognition=null;
+let tutorScenario=null,tutorTurn=0,tutorScore=0,tutorBusy=false;
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
@@ -87,7 +88,7 @@ function setAudio(text,autoplay=true){
 
 
 function nav(){
- const items=[["today","☀️","Сегодня"],["learn","📚","Учиться"],["speak","🎙️","Говорить"],["english","🧠","Мой English"]];
+ const items=[["today","☀️","Сегодня"],["learn","📚","Учиться"],["tutor","🤖","AI Tutor"],["english","🧠","Мой English"]];
  return '<div class="nav"><div class="navin">'+items.map(x=>'<button onclick="go(\''+x[0]+'\')" class="'+(page===x[0]?"active":"")+'">'+x[1]+'<small>'+x[2]+'</small></button>').join("")+'</div></div>'
 }
 function shell(body,title="SpeakFlow"){app.innerHTML='<div class="wrap"><div class="top"><div class="brand">Speak<span>Flow</span></div><div class="pill">'+title+'</div></div>'+body+'</div>'+nav()}
@@ -275,6 +276,90 @@ function updateStreak(){
  store.streak=store.lastDay===prevKey?store.streak+1:1;
  store.lastDay=todayKey;
 }
+
+
+const TUTOR_SCENARIOS=[
+ {id:"cafe",icon:"☕",title:"В кафе",desc:"Закажи еду, уточни цену и попроси счёт.",role:"Бариста",opening:"Hi! Welcome. What would you like to order?",
+  turns:[
+   {keys:["coffee","latte","tea","water","sandwich","food","like","want"],reply:"Sure! What would you like to drink?",tip:"Попробуй: I'd like a coffee, please."},
+   {keys:["coffee","latte","tea","water","juice"],reply:"Great choice. Would you like anything to eat?",tip:"Попробуй: I'd like a sandwich, please."},
+   {keys:["sandwich","cake","food","eat","nothing"],reply:"No problem. Would you like anything else?",tip:"Попробуй: That's all, thank you."},
+   {keys:["all","nothing","no","bill","check"],reply:"Of course. That will be twelve pounds, please.",tip:"Попробуй: Could I have the bill, please?"}
+ ]},
+ {id:"airport",icon:"✈️",title:"В аэропорту",desc:"Регистрация, посадка и помощь сотрудника.",role:"Airport agent",opening:"Good morning. May I see your passport, please?",
+  turns:[
+   {keys:["passport","here","sure","yes"],reply:"Thank you. Where are you flying today?",tip:"Попробуй: I'm flying to London."},
+   {keys:["london","berlin","paris","frankfurt","dubai","moscow","flying"],reply:"Do you have any bags to check in?",tip:"Попробуй: Yes, I have one bag."},
+   {keys:["bag","bags","one","two","yes","no"],reply:"Thank you. Your gate is A24. Boarding starts at six thirty.",tip:"Попробуй: What time does boarding start?"}
+ ]},
+ {id:"work",icon:"💼",title:"Рабочая встреча",desc:"Обсуди встречу, сроки и следующий шаг.",role:"Colleague",opening:"Hi! Do you have a minute to talk about the project?",
+  turns:[
+   {keys:["yes","sure","course","okay","minute"],reply:"Great. Could we move the meeting to tomorrow?",tip:"Попробуй: Yes, tomorrow works for me."},
+   {keys:["tomorrow","yes","fine","works","okay","can't","cannot"],reply:"Perfect. What time would work best for you?",tip:"Попробуй: How about ten in the morning?"},
+   {keys:["ten","eleven","nine","morning","afternoon","time"],reply:"Sounds good. I'll send you a calendar invitation.",tip:"Попробуй: Perfect, see you tomorrow."}
+ ]},
+ {id:"hotel",icon:"🏨",title:"В отеле",desc:"Заселись и реши простой вопрос с номером.",role:"Receptionist",opening:"Welcome to the hotel. Do you have a reservation?",
+  turns:[
+   {keys:["yes","reservation","booking","booked"],reply:"Great. Could I have your name, please?",tip:"Попробуй: The reservation is under Rustem."},
+   {keys:["name","rustem","under"],reply:"Thank you. Your room is on the third floor. Do you need any help with your luggage?",tip:"Попробуй: Yes, please."},
+   {keys:["yes","help","no","thanks","thank"],reply:"You're welcome. Enjoy your stay!",tip:"Попробуй: Thank you very much."}
+ ]}
+];
+
+function tutor(){
+ const cards=TUTOR_SCENARIOS.map(x=>'<button class="tutorScenario" onclick="startTutor(\''+x.id+'\')"><span class="tutorIcon">'+x.icon+'</span><span><b>'+x.title+'</b><small>'+x.desc+'</small></span><strong>→</strong></button>').join("");
+ shell('<section class="hero"><div class="eyebrow">AI Tutor · Speaking</div><h1>Поговорим по-английски</h1><p>Выбери ситуацию и веди диалог голосом. Приложение будет давать подсказки и оценивать твои реплики.</p></section><div class="card"><h3>Выбери ситуацию</h3>'+cards+'</div><div class="card"><div class="eyebrow">Твой уровень</div><p class="muted">'+store.level+' · '+goalName(store.goal)+'</p></div>');
+}
+function startTutor(id){
+ tutorScenario=TUTOR_SCENARIOS.find(x=>x.id===id);tutorTurn=0;tutorScore=0;tutorBusy=false;
+ renderTutor();
+}
+function renderTutor(){
+ if(!tutorScenario){tutor();return}
+ const turn=tutorScenario.turns[tutorTurn];
+ const progress=Math.round((tutorTurn/tutorScenario.turns.length)*100);
+ shell('<div class="lessonTop"><button class="back" onclick="tutor()">← Ситуации</button><span class="lessonCount">'+tutorScenario.icon+' '+tutorScenario.title+'</span></div>'+
+ '<div class="card tutorCard"><div class="eyebrow">'+tutorScenario.role+'</div><div class="tutorProgress"><i style="width:'+progress+'%"></i></div>'+
+ '<div class="tutorBubble other"><small>'+tutorScenario.role+'</small><div>'+esc(tutorTurn===0?tutorScenario.opening:(tutorTurn>0?tutorScenario.turns[tutorTurn-1].reply:""))+'</div></div>'+
+ '<div class="tutorHint"><span>💡 Подсказка</span>'+esc(turn.tip)+'</div>'+
+ '<button class="tutorMic" onclick="tutorSpeak()">🎙️<small>Ответить голосом</small></button>'+
+ '<div id="tutorResult" class="tutorResult">Нажми микрофон и ответь по-английски.</div></div>'+
+ '<div class="card"><div class="eyebrow">Тренировка</div><p class="muted">Не обязательно повторять подсказку дословно. Главное — передать смысл.</p></div>');
+}
+async function tutorSpeak(){
+ if(tutorBusy)return;
+ const box=document.getElementById("tutorResult");if(!box)return;
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){box.innerHTML='<span class="warning">Распознавание речи недоступно. На iPhone открой SpeakFlow в Safari.</span>';return}
+ tutorBusy=true;box.innerHTML='<span class="listeningPulse">🎙️ Слушаю…</span>';
+ try{
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+   const stream=await navigator.mediaDevices.getUserMedia({audio:true});stream.getTracks().forEach(t=>t.stop());
+  }
+ }catch(e){tutorBusy=false;box.innerHTML='<span class="warning">Разреши микрофон для Safari и попробуй ещё раз.</span>';return}
+ const r=new SR();r.lang="en-US";r.interimResults=false;r.continuous=false;r.maxAlternatives=1;
+ let done=false,timer=setTimeout(()=>{if(!done){done=true;tutorBusy=false;try{r.abort()}catch(e){}box.innerHTML='<span class="warning">Не удалось получить ответ. Попробуй ещё раз.</span>'}},12000);
+ r.onresult=e=>{
+  if(done)return;done=true;clearTimeout(timer);tutorBusy=false;
+  const got=e.results[0][0].transcript,turn=tutorScenario.turns[tutorTurn],score=turn.keys.some(k=>got.toLowerCase().includes(k))?Math.max(78,similarity(turn.tip.replace(/^Попробуй:\s*/,""),got)):Math.min(69,similarity(turn.tip.replace(/^Попробуй:\s*/,""),got));
+  tutorScore+=score;
+  box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Хороший ответ":"↻ Попробуй ещё раз")+'</div><div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+feedbackHtml(turn.tip.replace(/^Попробуй:\s*/,""),got);
+  setTimeout(()=>{
+   if(score<70){return}
+   if(tutorTurn+1<tutorScenario.turns.length){tutorTurn++;renderTutor()}
+   else{finishTutor()}
+  },1100);
+ };
+ r.onerror=e=>{if(done)return;done=true;clearTimeout(timer);tutorBusy=false;box.innerHTML='<span class="warning">Не удалось распознать речь. Нажми микрофон ещё раз.</span>'};
+ r.onend=()=>{};
+ try{r.start()}catch(e){clearTimeout(timer);tutorBusy=false;box.innerHTML='<span class="warning">Не удалось запустить микрофон. Попробуй ещё раз.</span>'}
+}
+function finishTutor(){
+ const avg=Math.round(tutorScore/tutorScenario.turns.length);
+ store.xp+=20;save();
+ shell('<section class="hero"><div class="eyebrow">AI Tutor · Готово</div><h1>Диалог завершён 🎉</h1><p>Ты прошёл ситуацию «'+esc(tutorScenario.title)+'».</p><div class="score">'+avg+'%</div><div class="small" style="text-align:center">Средний результат распознавания твоих реплик</div><button class="primary" onclick="startTutor(\''+tutorScenario.id+'\')">🔁 Повторить диалог</button><button class="secondary full" onclick="tutor()">← Выбрать другую ситуацию</button></section>');
+}
+
 function speak(){
  const phrase=findPracticePhrase();
  shell('<section class="hero"><div class="eyebrow">Speak mode</div><h1>Теперь скажи сам</h1><p>Сначала послушай фразу, затем произнеси её. Браузер может показать распознанный текст — это ориентировочная проверка, а не фонемный анализ.</p></section>'+
@@ -369,5 +454,5 @@ function english(){
 function setGoal(g){store.goal=g;save();toast("Цель обновлена");english()}
 function resetProgress(){if(confirm("Сбросить прогресс?")){store.done=[];store.xp=0;save();go("today")}}
 function toast(t){const x=document.createElement("div");x.className="toast";x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1800)}
-function go(x){page=x;({today,learn,speak,english}[x])()}
+function go(x){page=x;({today,learn,speak,tutor,english}[x])()}
 today();
