@@ -17,7 +17,7 @@ struct SpeakView: View {
                 .font(.title3)
                 .multilineTextAlignment(.center)
 
-            Button { audio.play(assetID: phrase.audio) } label: {
+            Button { audio.play(assetID: phrase.audio, fallbackText: phrase.english) } label: {
                 Image(systemName: "play.circle.fill")
                     .font(.system(size: 64))
             }
