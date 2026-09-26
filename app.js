@@ -380,13 +380,23 @@ function tutorCorrection(got,example,score){
 }
 function evaluateTutorAnswer(got){
  const box=document.getElementById("tutorResult");if(!box||!tutorScenario)return;
- const turn=tutorScenario.turns[tutorTurn],example=turn.tip.replace(/^Попробуй:\\s*/,"");
- const keysHit=turn.keys.some(k=>got.toLowerCase().includes(k));
- const score=keysHit?Math.max(78,similarity(example,got)):similarity(example,got);
+ const turn=tutorScenario.turns[tutorTurn];
+ const example=turn.tip.replace(/^Попробуй:\\s*/,"").trim();
+ const keysHit=turn.keys.some(k=>got.toLowerCase().includes(k.toLowerCase()));
+ const base=similarity(example,got);
+ const score=Math.min(98,Math.max(45,keysHit?Math.max(78,base):base));
  tutorScore+=score;
- box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Ответ принят":"↻ Можно улучшить")+'</div><div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+feedbackHtml(example,got)+
- '<div class="tutorActions"><button class="secondary" onclick="tutorListen()">🔊 Прослушать реплику</button><button class="primary" onclick="tutorNext()">Продолжить диалог →</button></div>'+
- '<div class="small">Оценка ориентировочная: сравниваются слова ответа с примером, а не смысл всего предложения.</div>';
+ const correction=tutorCorrection(got,example,score);
+ const reply=tutorNaturalReply(got,turn);
+ box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Понятно":"↻ Можно улучшить")+'</div>'+
+ '<div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+
+ '<div class="tutorFeedback"><b>💬 Обратная связь</b><div>'+esc(correction)+'</div></div>'+
+ '<div class="tutorAIReply"><small>'+tutorScenario.role+'</small><div>'+esc(reply)+'</div></div>'+
+ feedbackHtml(example,got)+
+ '<div class="small">Адаптивная оценка: учитываются слова и совпадение с задачей. Это ещё не полноценная смысловая AI-модель.</div>';
+ tutorBusy=false;
+ const next=document.getElementById("tutorNextBtn");
+ if(next)next.style.display="block";
 }
 async function tutorSpeak(){
  if(tutorBusy)return;
