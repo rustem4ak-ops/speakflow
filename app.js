@@ -217,7 +217,7 @@ function lessonSpeak(target){
    lessonScore=similarity(target,got);
    const good=lessonScore>=80;
    box.innerHTML='<div class="resultWord '+(good?"success":"warning")+'">'+(good?"✓ Получилось!":"↻ Пока не получилось")+'</div><div class="recognizedText">'+esc(got)+'</div><div class="resultScore">'+lessonScore+'%</div>'+
-     (good?'<div class="small resultHint">Отлично. Переходим дальше…</div>':'<div class="small resultHint">Нажми 🎙️ и попробуй ещё раз.</div>');
+     (good?'<div class="small resultHint">Отлично. Переходим дальше…</div>':'<div class="small resultHint">Попробуй ещё раз.</div>'+lessonMicMarkup(target));
    if(good){
      setTimeout(()=>{
        const idx=current.items.findIndex(x=>x[0]===target);
@@ -225,7 +225,7 @@ function lessonSpeak(target){
      },1000);
    }
  };
- r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
+ r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>'+lessonMicMarkup(target);
 }
 function finishPhrase(i,isReview){ const text=current.items[i][0]; if(isReview){if(lessonScore!==null)scheduleReview(text,lessonScore);save();toast("Результат сохранён");go("today");return;} markDone(i); }
 function markDone(i){
