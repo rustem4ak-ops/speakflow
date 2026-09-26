@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<title>SpeakFlow</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;color:#fff;background:#080a0f}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,#263149 0,#10131b 38%,#080a0f 72%);min-height:100vh}
+.app{max-width:520px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 18px calc(28px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 2px 10px}
+.logo{font-size:23px;font-weight:800;letter-spacing:-.7px}.pill{background:#202633;border:1px solid #343b4a;border-radius:20px;padding:7px 11px;font-size:13px;color:#cfd6e5}
+.progress{height:5px;background:#242a35;border-radius:8px;overflow:hidden;margin:12px 0 26px}.bar{height:100%;width:20%;background:#fff;border-radius:8px;transition:.25s}
+.card{background:rgba(20,24,33,.88);border:1px solid #2d3442;border-radius:28px;padding:28px 22px;box-shadow:0 18px 60px #0008}
+.label{font-size:12px;color:#8993a7;text-transform:uppercase;letter-spacing:1.2px;font-weight:700}.phrase{font-size:30px;line-height:1.15;font-weight:750;letter-spacing:-.8px;margin:14px 0 12px}.translation{font-size:17px;color:#aeb7c7;min-height:27px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}.btn{border:0;border-radius:18px;padding:15px 10px;font-size:16px;font-weight:700;color:#fff;background:#2a3140}.btn.primary{background:#fff;color:#080a0f}.btn:active{transform:scale(.98)}.speak{margin-top:12px;width:100%;background:#5b6df6}.result{margin-top:18px;padding:14px;border-radius:16px;background:#111620;color:#cdd5e3}.score{font-size:42px;font-weight:800;color:#fff}.next{width:100%;margin-top:14px}.hint{font-size:13px;color:#7f899c;text-align:center;margin:18px 0}.lesson{margin-top:18px;color:#aeb7c7;font-size:14px;display:flex;justify-content:space-between}.dot{width:8px;height:8px;background:#fff;border-radius:50%;display:inline-block;margin-right:7px}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="logo">SpeakFlow</div><div class="pill">A1 · 1/5</div></header>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div class="card">
+<div class="label">Meeting Someone</div>
+<div class="phrase" id="phrase"></div>
+<div class="translation" id="translation">Tap “Show meaning”</div>
+<div class="actions">
+<button class="btn primary" id="listen">▶ Listen</button>
+<button class="btn" id="meaning">Show meaning</button>
+</div>
+<button class="btn speak" id="speak">🎙 Speak</button>
+<div class="result" id="result" hidden><div class="score" id="score">—%</div><div id="heard"></div></div>
+<button class="btn next" id="next">Next phrase →</button>
+</div>
+<div class="lesson"><span><span class="dot"></span>Listen → Understand → Speak</span><span id="count">1/5</span></div>
+<div class="hint">Demo version · audio uses the iPhone's English voice</div>
+</div>
+<script>
+const phrases=[
+["Hi, nice to meet you.","Привет, приятно познакомиться."],
+["Nice to meet you too.","Мне тоже приятно познакомиться."],
+["What's your name?","Как тебя зовут?"],
+["My name is Alex.","Меня зовут Алекс."],
+["Where are you from?","Откуда ты?"]
+];
+let i=0,recognition=null,recording=false;
+const $=id=>document.getElementById(id);
+function render(){ $("phrase").textContent=phrases[i][0];$("translation").textContent="Tap “Show meaning”";$("result").hidden=true;$("bar").style.width=((i+1)/phrases.length*100)+"%";$("count").textContent=(i+1)+"/"+phrases.length}
+function speak(){if(!("speechSynthesis"in window))return; speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(phrases[i][0]);u.lang="en-US";u.rate=.82;speechSynthesis.speak(u)}
+$("listen").onclick=speak;
+$("meaning").onclick=()=>{$("translation").textContent=phrases[i][1]};
+$("next").onclick=()=>{i=(i+1)%phrases.length;render()};
+$("speak").onclick=()=>{
+ if(recording){recognition?.stop();return}
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){$("result").hidden=false;$("score").textContent="—";$("heard").textContent="Speech recognition is not available in this browser. Tap Listen and repeat aloud.";return}
+ recognition=new SR();recognition.lang="en-US";recognition.interimResults=false;recognition.maxAlternatives=1;
+ recording=true;$("speak").textContent="⏹ Stop & check";
+ recognition.onresult=e=>{let heard=e.results[0][0].transcript;let a=phrases[i][0].toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/),b=heard.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/);let same=b.filter((w,n)=>w===a[n]).length;let score=Math.round(same/Math.max(a.length,b.length,1)*100);$("score").textContent=score+"%";$("heard").textContent="You said: "+heard;$("result").hidden=false};
+ recognition.onend=()=>{recording=false;$("speak").textContent="🎙 Speak"};recognition.onerror=()=>{recording=false;$("speak").textContent="🎙 Speak"};
+ recognition.start();
+};
+render();
+</script>
+</body></html>
