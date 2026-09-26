@@ -30,6 +30,7 @@ let page="today",current=null,lessonPhase=0,lessonScore=null,lessonFinished=fals
 let lessonAudioContext=null,lessonAudioSource=null,lessonAudioToken=0,lessonRecognition=null;
 let tutorScenario=null,tutorTurn=0,tutorScore=0,tutorBusy=false,tutorMessages=[];
 const AI_TUTOR_ENDPOINT=(location.hostname.endsWith("vercel.app")?"/api/tutor":"");
+let tutorLastAIReply="";
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
@@ -350,6 +351,26 @@ function tutorNext(){
  if(tutorTurn+1<tutorScenario.turns.length){tutorTurn++;tutorBusy=false;renderTutor()}
  else finishTutor();
 }
+function addTutorReview(text,lesson){
+ if(!text)return;
+ const key="AI:"+text.slice(0,120);
+ const rd=reviewData(key);
+ rd.attempts=(rd.attempts||0)+1;
+ rd.last=Date.now();
+ rd.level=store.level;
+ if(lesson)rd.note=lesson;
+ rd.due=Date.now()+86400000;
+ save();
+}
+function tutorSpeakAI(){
+ if(!tutorLastAIReply){toast("Сначала получи ответ Tutor");return}
+ if(!("speechSynthesis" in window)){toast("Озвучивание недоступно");return}
+ window.speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(tutorLastAIReply);
+ u.lang="en-US";
+ u.rate=0.9;
+ window.speechSynthesis.speak(u);
+}
 function tutorNaturalReply(got,turn){
  const text=got.toLowerCase();
  if(tutorScenario.id==="cafe"){
@@ -394,7 +415,9 @@ async function evaluateTutorAnswer(got){
     const ai=await response.json();
     const score=Math.max(0,Math.min(100,Number(ai.score)||0));
     tutorScore+=score;
-    tutorMessages.push({role:"user",content:got},{role:"assistant",content:ai.reply||""});
+    tutorLastAIReply=ai.reply||"";
+    tutorMessages.push({role:"user",content:got},{role:"assistant",content:tutorLastAIReply});
+    if(ai.correction||ai.suggestion) addTutorReview(got,ai.correction||ai.suggestion);
     box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Понятно":"↻ Можно улучшить")+'</div>'+
     '<div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+
     (ai.correction?'<div class="tutorFeedback"><b>✏️ Исправление</b><div>'+esc(ai.correction)+'</div></div>':"")+
