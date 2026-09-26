@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleDisplayName</key><string>SpeakFlow</string>
+<key>CFBundleIdentifier</key><string>com.rustem4ak.speakflow</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>UILaunchScreen</key><dict/>
+<key>NSSpeechRecognitionUsageDescription</key><string>SpeakFlow uses speech recognition to check how closely your spoken English matches the phrase.</string>
+<key>NSMicrophoneUsageDescription</key><string>SpeakFlow needs microphone access for speaking practice.</string>
+</dict></plist>
