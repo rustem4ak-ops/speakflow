@@ -142,15 +142,15 @@ function phaseLabel(){
 function renderLesson(i,isReview=false){
  const item=current.items[i],text=item[0],tr=item[1];
  const progress=Math.round(((i+1)/current.items.length)*100);
- let body='<div class="lessonTop"><button class="back" onclick="go(\\'learn\\')">← К урокам</button><span class="lessonCount">'+(i+1)+' / '+current.items.length+'</span></div>'+
+ let body='<div class="lessonTop"><button class="back" onclick="go(\'learn\')">← К урокам</button><span class="lessonCount">'+(i+1)+' / '+current.items.length+'</span></div>'+
  '<div class="card lessonCard"><div class="eyebrow">'+current.level+' · '+current.title+'</div>'+
  '<div class="miniMeter"><i style="width:'+progress+'%"></i></div>'+
  '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>'+
- '<button class="listenAction" onclick="lessonListen(\\''+jsq(text)+'\\')" aria-label="Прослушать фразу"><span>🔊</span><b>Прослушать фразу</b></button>'+
+ '<button class="listenAction" onclick="lessonListen(\''+jsq(text)+'\')" aria-label="Прослушать фразу"><span>🔊</span><b>Прослушать фразу</b></button>'+
  '<div class="lessonListenHint">Нажми, чтобы услышать английскую фразу</div>'+
  '<div id="lessonSpeech" class="lessonResult"><span class="small">После прослушивания нажми микрофон внизу и повтори фразу.</span></div>'+
  '</div>'+
- '<div class="lessonBottom"><button class="bottomMic" onclick="lessonSpeak(\\''+jsq(text)+'\\')" aria-label="Повторить фразу"><span>🎙️</span></button><div class="bottomMicText">Повтори фразу</div></div>';
+ '<div class="lessonBottom"><button class="bottomMic" onclick="lessonSpeak(\''+jsq(text)+'\')" aria-label="Повторить фразу"><span>🎙️</span></button><div class="bottomMicText">Повтори фразу</div></div>';
  shell(body);
 }
 function lessonListen(text){
