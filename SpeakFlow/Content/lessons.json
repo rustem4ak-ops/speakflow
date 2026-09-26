@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "courses": [
+    {
+      "id": "a1-everyday-english",
+      "level": "A1",
+      "title": "Everyday English",
+      "description": "Useful phrases for real everyday conversations.",
+      "lessons": [
+        {
+          "id": "a1-everyday-001",
+          "title": "Meeting Someone",
+          "topic": "Introductions",
+          "phrases": [
+            {"id":"p001","english":"Hi, nice to meet you.","translation":"Привет, приятно познакомиться.","audio":"a1_everyday_001_p001","difficulty":1},
+            {"id":"p002","english":"Nice to meet you too.","translation":"Мне тоже приятно познакомиться.","audio":"a1_everyday_001_p002","difficulty":1},
+            {"id":"p003","english":"What's your name?","translation":"Как тебя зовут?","audio":"a1_everyday_001_p003","difficulty":1},
+            {"id":"p004","english":"My name is Alex.","translation":"Меня зовут Алекс.","audio":"a1_everyday_001_p004","difficulty":1},
+            {"id":"p005","english":"Where are you from?","translation":"Откуда ты?","audio":"a1_everyday_001_p005","difficulty":1}
+          ]
+        }
+      ]
+    }
+  ]
+}
