@@ -337,7 +337,7 @@ function renderCourseQuiz(){
  '<div class="card lessonCard"><div class="eyebrow">📝 Проверка урока · '+current.level+'</div>'+
  '<div class="miniMeter"><i style="width:'+Math.round(courseQuizIndex/courseQuizQuestions.length*100)+'%"></i></div>'+
  '<div class="phrase" style="font-size:20px">'+esc(item[0])+'</div><div class="small" style="margin-top:8px">Выбери правильный перевод:</div>'+
- '<div style="display:grid;gap:10px;margin-top:14px">'+options.map((x,i)=>'<button class="secondary quizOption" onclick="answerCourseQuiz('+JSON.stringify(x)+','+JSON.stringify(correct)+')">'+esc(x)+'</button>').join('')+'</div>'+
+ '<div style="display:grid;gap:10px;margin-top:14px">'+options.map((x,i)=>'<button class="secondary quizOption" onclick="answerCourseQuiz(\''+jsq(x)+'\',\''+jsq(correct)+'\')">'+esc(x)+'</button>').join('')+'</div>'+
  '</div>');
 }
 function answerCourseQuiz(answer,correct){
