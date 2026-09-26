@@ -140,11 +140,22 @@ function today(){
 }
 function goalName(g){return {travel:"Цель: путешествия",work:"Цель: работа и учёба",conversation:"Цель: свободное общение",daily:"Цель: повседневная жизнь"}[g]||"Цель: английский"}
 function jsq(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
+function levelStats(level){
+ const courses=COURSES.filter(c=>c.level===level);
+ const total=courses.reduce((n,c)=>n+c.items.length,0);
+ const done=courses.reduce((n,c)=>n+c.items.filter(x=>store.done.includes(x[0])).length,0);
+ return {courses,total,done,pct:total?Math.round(done/total*100):0};
+}
 function learn(){
  const levels=["A1","A2","B1","B2","C1"];
- shell('<div class="tabs">'+levels.map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();learn()">'+x+'</button>').join("")+'</div>'+
- '<section class="hero"><div class="eyebrow">Обучение</div><h1>Говорим фразами</h1><p>Слушай → повторяй → говори без подсказки. В каталоге уже "+COURSES.reduce((n,c)=>n+c.items.length,0)+" учебных фраз.</p></section>'+
- COURSES.filter(c=>c.level===store.level).map(c=>'<div class="card course"><div class="courseIcon">'+c.icon+'</div><div style="flex:1"><h3>'+c.title+'</h3><div class="muted">'+c.desc+'</div><div class="small" style="margin-top:6px">'+c.items.filter(x=>store.done.includes(x[0])).length+'/'+c.items.length+' фраз изучено</div><button class="secondary" style="margin-top:10px" onclick="openCourse('+c.id+')">Открыть</button></div></div>').join(""))
+ const st=levelStats(store.level),allDone=st.done>=st.total;
+ const cards=st.courses.map((c,idx)=>{
+  const d=c.items.filter(x=>store.done.includes(x[0])).length,p=c.items.length?Math.round(d/c.items.length*100):0;
+  return '<div class="card course"><div class="courseIcon">'+c.icon+'</div><div style="flex:1"><div class="eyebrow">Модуль '+(idx+1)+' · '+c.level+'</div><h3>'+c.title+'</h3><div class="muted">'+c.desc+'</div><div style="display:flex;justify-content:space-between;margin-top:10px"><span class="small">'+d+'/'+c.items.length+' фраз</span><b class="small">'+p+'%</b></div><div class="meter" style="margin-top:6px"><i style="width:'+p+'%"></i></div><button class="secondary" style="margin-top:10px" onclick="openCourse('+c.id+')">'+(d===c.items.length?"Повторить":"Открыть модуль")+'</button></div></div>';
+ }).join("");
+ const tabs=levels.map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();learn()">'+x+'</button>').join("");
+ const route=levels.map(x=>{const q=levelStats(x);return '<button class="secondary" style="flex:1;min-width:58px" onclick="store.level=\''+x+'\';save();learn()">'+x+' · '+q.pct+'%</button>'}).join("");
+ shell('<div class="tabs">'+tabs+'</div><section class="hero"><div class="eyebrow">Карта обучения · '+store.level+'</div><h1>'+st.pct+'% уровня пройдено</h1><p>'+st.done+' из '+st.total+' фраз закреплено. Пройди четыре тематических модуля и итоговый тест.</p><div class="meter" style="margin-top:14px"><i style="width:'+st.pct+'%"></i></div>'+(allDone?'<button class="primary" style="margin-top:14px;width:100%" onclick="startLevelTest()">🏆 Итоговый тест '+store.level+'</button>':'<div class="small" style="margin-top:12px">Итоговый тест откроется после всех модулей.</div>')+'</section><div class="card"><div class="eyebrow">Все уровни</div><div style="display:flex;gap:8px;margin-top:10px">'+route+'</div></div>'+cards);
 }
 function openCourse(id){
  current=COURSES.find(c=>c.id===id);
@@ -355,6 +366,37 @@ function finishCourseQuiz(){
  shell('<section class="hero"><div class="eyebrow">Результат урока</div><h1>'+ (percent>=80?"Отлично! 🎉":"Хорошая работа") +'</h1><p>Ты ответил правильно на <b>'+courseQuizScore+' из '+total+'</b> вопросов · <b>'+percent+'%</b></p>'+
  '<div class="card"><h3>Что дальше?</h3><p class="muted">'+(percent>=80?"Урок закреплён. Можно переходить дальше.":"Повтори слабые фразы в Smart Review и попробуй тест ещё раз.")+'</p>'+
  '<button class="primary" onclick="go(\'learn\')">← К урокам</button></div></section>');
+}
+
+function startLevelTest(){
+ const st=levelStats(store.level);
+ if(st.done<st.total){toast("Сначала пройди все модули уровня");return}
+ const pool=st.courses.flatMap(c=>c.items);
+ courseQuizQuestions=pool.sort(()=>Math.random()-.5).slice(0,10);
+ courseQuizIndex=0;courseQuizScore=0;renderLevelTest();
+}
+function renderLevelTest(){
+ if(courseQuizIndex>=courseQuizQuestions.length){finishLevelTest();return}
+ const item=courseQuizQuestions[courseQuizIndex],correct=item[1];
+ const others=COURSES.filter(c=>c.level===store.level).flatMap(c=>c.items).filter(x=>x!==item).sort(()=>Math.random()-.5).slice(0,3).map(x=>x[1]);
+ const options=[correct,...others].sort(()=>Math.random()-.5);
+ shell('<div class="lessonTop"><button class="back" onclick="go(\'learn\')">← К карте</button><span class="lessonCount">🏆 '+store.level+' · '+(courseQuizIndex+1)+' / 10</span></div>'+
+ '<div class="card lessonCard"><div class="eyebrow">Итоговый тест уровня</div><div class="miniMeter"><i style="width:'+Math.round(courseQuizIndex/10*100)+'%"></i></div>'+
+ '<div class="phrase" style="font-size:20px">'+esc(item[0])+'</div><div class="small" style="margin-top:8px">Выбери правильный перевод:</div>'+
+ '<div style="display:grid;gap:10px;margin-top:14px">'+options.map(x=>'<button class="secondary quizOption" onclick="answerLevelTest(\''+jsq(x)+'\',\''+jsq(correct)+'\')">'+esc(x)+'</button>').join('')+'</div></div>');
+}
+function answerLevelTest(answer,correct){
+ document.querySelectorAll(".quizOption").forEach(b=>b.disabled=true);
+ const ok=answer===correct;if(ok)courseQuizScore++;
+ toast(ok?"✓ Правильно":"↻ Не совсем");
+ setTimeout(()=>{courseQuizIndex++;renderLevelTest()},450);
+}
+function finishLevelTest(){
+ const percent=Math.round(courseQuizScore/10*100);
+ if(percent>=80){store.xp+=100;save()}
+ shell('<section class="hero"><div class="eyebrow">🏆 Уровень '+store.level+'</div><h1>'+percent+'%</h1><p>Правильных ответов: <b>'+courseQuizScore+' из 10</b>.</p>'+
+ '<div class="card"><h3>'+ (percent>=80?"Уровень закреплён 🎉":"Нужно ещё немного практики") +'</h3><p class="muted">'+(percent>=80?"Ты завершил учебный маршрут этого уровня. Можно переходить выше или продолжать повторение.":"Повтори Smart Review и пройди итоговый тест ещё раз.")+'</p>'+
+ '<button class="primary" onclick="go(\'learn\')">← Вернуться к карте</button></div></section>');
 }
 const TUTOR_SCENARIOS=[
  {id:"cafe",icon:"☕",title:"В кафе",desc:"Закажи еду, уточни цену и попроси счёт.",role:"Бариста",opening:"Hi! Welcome. What would you like to order?",
