@@ -28,8 +28,7 @@ const DEFAULT={done:[],xp:0,streak:0,level:"A1",goal:"conversation",minutes:15,a
 const store=Object.assign(DEFAULT,JSON.parse(localStorage.getItem("speakflow11")||"{}")); store.review=store.review||{};
 let page="today",current=null,lessonPhase=0,lessonScore=null,lessonFinished=false,lessonTarget="";
 let lessonAudioContext=null,lessonAudioSource=null,lessonAudioToken=0,lessonRecognition=null;
-let tutorScenario=null,tutorTurn=0,tutorScore=0,tutorBusy=false,tutorMessages=[],tutorLastAnswer="",tutorAIStatus="local";
-const AI_TUTOR_ENDPOINT="";
+let tutorScenario=null,tutorTurn=0,tutorScore=0,tutorBusy=false;
 const app=document.getElementById("app");
 function save(){localStorage.setItem("speakflow11",JSON.stringify(store))}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
@@ -102,7 +101,7 @@ function today(){
  '<div class="card"><div class="eyebrow">Прогресс курса</div><div style="display:flex;justify-content:space-between;margin:8px 0 9px"><b>'+pct+'%</b><span class="small">'+done+' / '+total+'</span></div><div class="meter"><i style="width:'+pct+'%"></i></div></div>')
 }
 function goalName(g){return {travel:"Цель: путешествия",work:"Цель: работа и учёба",conversation:"Цель: свободное общение",daily:"Цель: повседневная жизнь"}[g]||"Цель: английский"}
-function jsq(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\'")}
+function jsq(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
 function learn(){
  const levels=["A1","A2","B1","B2","C1"];
  shell('<div class="tabs">'+levels.map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();learn()">'+x+'</button>').join("")+'</div>'+
@@ -309,30 +308,29 @@ const TUTOR_SCENARIOS=[
 
 function tutor(){
  const cards=TUTOR_SCENARIOS.map(x=>'<button class="tutorScenario" onclick="startTutor(\''+x.id+'\')"><span class="tutorIcon">'+x.icon+'</span><span><b>'+x.title+'</b><small>'+x.desc+'</small></span><strong>→</strong></button>').join("");
- shell('<section class="hero"><div class="eyebrow">AI Tutor · Speaking</div><h1>Живой разговор</h1><p>Отвечай своими словами. SpeakFlow старается продолжать диалог по смыслу, а не требует одну правильную фразу.</p></section><div class="card"><div class="aiMode"><span class="aiDot"></span><b id="aiModeTitle">AI Tutor</b><small id="aiModeText">Свободный ответ · адаптивный режим</small></div><h3>Выбери ситуацию</h3>'+cards+'</div>');
+ shell('<section class="hero"><div class="eyebrow">AI Tutor · Speaking</div><h1>Поговорим по-английски</h1><p>Выбери ситуацию и веди диалог голосом. Приложение будет давать подсказки и оценивать твои реплики.</p></section><div class="card"><h3>Выбери ситуацию</h3>'+cards+'</div><div class="card"><div class="eyebrow">Твой уровень</div><p class="muted">'+store.level+' · '+goalName(store.goal)+'</p></div>');
 }
 function startTutor(id){
- tutorScenario=TUTOR_SCENARIOS.find(x=>x.id===id);tutorTurn=0;tutorScore=0;tutorBusy=false;tutorMessages=[];tutorLastAnswer="";tutorAIStatus=AI_TUTOR_ENDPOINT?"ai":"local";
- if(tutorScenario)tutorMessages=[{role:"assistant",content:tutorScenario.opening}];
+ tutorScenario=TUTOR_SCENARIOS.find(x=>x.id===id);tutorTurn=0;tutorScore=0;tutorBusy=false;
  renderTutor();
 }
 function renderTutor(){
  if(!tutorScenario){tutor();return}
  const turn=tutorScenario.turns[tutorTurn];
  const progress=Math.round((tutorTurn/tutorScenario.turns.length)*100);
- const line=tutorMessages.length?tutorMessages[tutorMessages.length-1].content:(tutorTurn===0?tutorScenario.opening:tutorScenario.turns[tutorTurn-1].reply);
- const statusText=tutorAIStatus==="ai"?"AI подключён":"Адаптивный режим";
+ const line=tutorTurn===0?tutorScenario.opening:tutorScenario.turns[tutorTurn-1].reply;
  shell('<div class="lessonTop"><button class="back" onclick="tutor()">← Ситуации</button><span class="lessonCount">'+tutorScenario.icon+' '+tutorScenario.title+'</span></div>'+
- '<div class="card tutorCard tutorCompact"><div class="tutorHeadRow"><div class="eyebrow">'+tutorScenario.role+'</div><span class="aiStatus '+(tutorAIStatus==="ai"?"live":"local")+'">'+statusText+'</span></div><div class="tutorProgress"><i style="width:'+progress+'%"></i></div>'+
+ '<div class="card tutorCard tutorCompact"><div class="eyebrow">'+tutorScenario.role+'</div><div class="tutorProgress"><i style="width:'+progress+'%"></i></div>'+
  '<div class="tutorBubble other"><small>'+tutorScenario.role+'</small><div id="tutorLine">'+esc(line)+'</div></div>'+
  '<div class="tutorActions tutorListenRow"><button class="secondary" onclick="tutorListen()">🔊 Прослушать</button><button class="secondary tutorSlow" onclick="tutorListen(true)">🐢 Медленно</button></div>'+
  '<div class="tutorHint tutorHintCompact"><span>💡</span> '+esc(turn.tip)+'</div>'+
- '<button class="tutorMic tutorMicCompact" onclick="tutorSpeak()">🎙️ <small>Ответить голосом</small></button>'+
- '<div class="tutorManual tutorManualCompact"><div class="tutorInputRow"><input id="tutorText" type="text" placeholder="Или напиши ответ своими словами…" autocomplete="off"><button onclick="submitTutorText()">✓</button></div></div>'+
- '<div id="tutorResult" class="tutorResult tutorResultCompact">Говори свободно — не обязательно повторять подсказку дословно.</div>'+
- '<button class="primary tutorContinue" onclick="tutorNext()" id="tutorNextBtn" style="display:none">Продолжить →</button>'+
+ '<button class="tutorMic tutorMicCompact" onclick="tutorSpeak()">🎙️ <small>Ответить</small></button>'+
+ '<div class="tutorManual tutorManualCompact"><div class="tutorInputRow"><input id="tutorText" type="text" placeholder="Или напиши ответ…" autocomplete="off"><button onclick="submitTutorText()">✓</button></div></div>'+
+ '<div id="tutorResult" class="tutorResult tutorResultCompact">Прослушай → ответь → получи результат.</div>'+
+ '<button class="primary tutorContinue" onclick="tutorNext()" id="tutorNextBtn">Продолжить →</button>'+
  '</div>');
 }
+
 function tutorListen(slow=false){
  const line=document.getElementById("tutorLine");
  if(!line)return;
@@ -348,52 +346,25 @@ function submitTutorText(){
 }
 function tutorNext(){
  if(!tutorScenario)return;
- if(tutorTurn+1<tutorScenario.turns.length){tutorTurn++;tutorBusy=false;tutorLastAnswer="";renderTutor()}
+ if(tutorTurn+1<tutorScenario.turns.length){tutorTurn++;tutorBusy=false;renderTutor()}
  else finishTutor();
 }
-function localTutorEvaluation(got){
- const turn=tutorScenario.turns[tutorTurn];
- const example=turn.tip.replace(/^Попробуй:\\s*/,"");
+function evaluateTutorAnswer(got){
+ const box=document.getElementById("tutorResult");if(!box||!tutorScenario)return;
+ const turn=tutorScenario.turns[tutorTurn],example=turn.tip.replace(/^Попробуй:\\s*/,"");
  const keysHit=turn.keys.some(k=>got.toLowerCase().includes(k));
- const lexical=similarity(example,got);
- const score=keysHit?Math.max(78,lexical):Math.max(35,Math.min(92,Math.round(lexical*.65+35)));
- const natural=got.trim().split(/\\s+/).length>=3;
- const feedback=score>=80?(natural?"Хорошо. Ответ звучит уместно для этой ситуации.":"Хорошо. Попробуй в следующий раз добавить немного деталей."):(score>=60?"Смысл частично подходит. Попробуй сказать это чуть полнее.":"Попробуй ответить проще и использовать подсказку как опору.");
- return {reply:turn.reply,score,feedback,example,source:"local"};
-}
-async function aiTutorRequest(got){
- const history=tutorMessages.slice(-8);
- const payload={level:store.level,goal:store.goal,scenario:{id:tutorScenario.id,title:tutorScenario.title,role:tutorScenario.role},turn:tutorTurn,userText:got,messages:history};
- const res=await fetch(AI_TUTOR_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
- if(!res.ok)throw new Error("AI endpoint "+res.status);
- const data=await res.json();
- return {reply:String(data.reply||""),score:Math.max(0,Math.min(100,Number(data.score)||0)),feedback:String(data.feedback||"Ответ понятен. Продолжаем."),example:String(data.example||""),source:"ai",correction:String(data.correction||"")};
-}
-async function evaluateTutorAnswer(got){
- const box=document.getElementById("tutorResult");if(!box||!tutorScenario||tutorBusy)return;
- tutorBusy=true;tutorLastAnswer=got;
- box.innerHTML='<span class="listeningPulse">🧠 Анализирую ответ…</span><div class="small resultHint">Смотрю на смысл, уместность и английскую формулировку.</div>';
- let result;
- try{
-  result=AI_TUTOR_ENDPOINT?await aiTutorRequest(got):localTutorEvaluation(got);
- }catch(e){
-  tutorAIStatus="local";result=localTutorEvaluation(got);
- }
- tutorMessages.push({role:"user",content:got},{role:"assistant",content:result.reply});
- tutorScore+=result.score;tutorBusy=false;
- const correction=result.correction?'<div class="tutorCorrection"><b>Можно сказать естественнее:</b> '+esc(result.correction)+'</div>':"";
- box.innerHTML='<div class="resultWord '+(result.score>=70?"success":"warning")+'">'+(result.score>=70?"✓ Ответ подходит":"↻ Можно улучшить")+'</div><div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+result.score+'%</div><div class="tutorFeedback">'+esc(result.feedback)+'</div>'+correction+
- '<div class="tutorAIReply"><small>'+esc(tutorScenario.role)+'</small>'+esc(result.reply)+'</div>'+
- '<div class="small">В режиме AI оценка учитывает ответ в контексте диалога. Без подключённого AI-сервера работает адаптивный fallback.</div>';
- const next=document.getElementById("tutorNextBtn");if(next)next.style.display="block";
- const line=document.getElementById("tutorLine");if(line)line.textContent=result.reply;
+ const score=keysHit?Math.max(78,similarity(example,got)):similarity(example,got);
+ tutorScore+=score;
+ box.innerHTML='<div class="resultWord '+(score>=70?"success":"warning")+'">'+(score>=70?"✓ Ответ принят":"↻ Можно улучшить")+'</div><div class="recognizedText">«'+esc(got)+'»</div><div class="resultScore">'+score+'%</div>'+feedbackHtml(example,got)+
+ '<div class="tutorActions"><button class="secondary" onclick="tutorListen()">🔊 Прослушать реплику</button><button class="primary" onclick="tutorNext()">Продолжить диалог →</button></div>'+
+ '<div class="small">Оценка ориентировочная: сравниваются слова ответа с примером, а не смысл всего предложения.</div>';
 }
 async function tutorSpeak(){
  if(tutorBusy)return;
  const box=document.getElementById("tutorResult");if(!box)return;
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SR){box.innerHTML='<span class="warning">Распознавание речи недоступно. Можно написать ответ в поле.</span>';return}
- tutorBusy=true;box.innerHTML='<span class="listeningPulse">🎙️ Слушаю…</span><div class="small resultHint">Говори своими словами, не обязательно повторять подсказку.</div>';
+ if(!SR){box.innerHTML='<span class="warning">Распознавание речи недоступно. Можно написать ответ в поле выше.</span>';return}
+ tutorBusy=true;box.innerHTML='<span class="listeningPulse">🎙️ Слушаю…</span>';
  try{
   if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
    const stream=await navigator.mediaDevices.getUserMedia({audio:true});stream.getTracks().forEach(t=>t.stop());
@@ -408,7 +379,7 @@ async function tutorSpeak(){
 function finishTutor(){
  const avg=Math.round(tutorScore/tutorScenario.turns.length);
  store.xp+=20;save();
- shell('<section class="hero"><div class="eyebrow">AI Tutor · Готово</div><h1>Диалог завершён 🎉</h1><p>Ты прошёл ситуацию «'+esc(tutorScenario.title)+'».</p><div class="score">'+avg+'%</div><div class="small" style="text-align:center">Средний результат диалога</div><button class="primary" onclick="startTutor(\''+tutorScenario.id+'\')">🔁 Повторить диалог</button><button class="secondary full" onclick="tutor()">← Выбрать другую ситуацию</button></section>');
+ shell('<section class="hero"><div class="eyebrow">AI Tutor · Готово</div><h1>Диалог завершён 🎉</h1><p>Ты прошёл ситуацию «'+esc(tutorScenario.title)+'».</p><div class="score">'+avg+'%</div><div class="small" style="text-align:center">Средний результат распознавания твоих реплик</div><button class="primary" onclick="startTutor(\''+tutorScenario.id+'\')">🔁 Повторить диалог</button><button class="secondary full" onclick="tutor()">← Выбрать другую ситуацию</button></section>');
 }
 
 function speak(){
