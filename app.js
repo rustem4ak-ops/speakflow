@@ -148,7 +148,7 @@ function renderLesson(i,isReview=false){
  '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>'+
  '<button class="listenAction" onclick="lessonListen(\\''+jsq(text)+'\\')" aria-label="Прослушать фразу"><span>🔊</span><b>Прослушать фразу</b></button>'+
  '<div class="lessonListenHint">Нажми, чтобы услышать английскую фразу</div>'+
- '<div id="lessonSpeech" class="lessonResult">'+(lessonScore===null?'<span class="small">После прослушивания нажми микрофон внизу и повтори фразу.</span>':'Результат: '+lessonScore+'%')+'</div>'+
+ '<div id="lessonSpeech" class="lessonResult"><span class="small">После прослушивания нажми микрофон внизу и повтори фразу.</span></div>'+
  '</div>'+
  '<div class="lessonBottom"><button class="bottomMic" onclick="lessonSpeak(\\''+jsq(text)+'\\')" aria-label="Повторить фразу"><span>🎙️</span></button><div class="bottomMicText">Повтори фразу</div></div>';
  shell(body);
@@ -192,16 +192,56 @@ function lessonSpeak(target){
  };
  r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
 }
-sultScore">'+lessonScore+'%</div>';
-   if(good){
-     setTimeout(()=>{
-       const idx=current.items.findIndex(x=>x[0]===target);
-       if(idx>=0){markDone(idx);}
-     },1100);
-   }else{
-     setTimeout(()=>{box.innerHTML+='<div class="small">Нажми 🎙️ и повтори ещё раз.</div>'},700);
-   }
- };
- r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
- r.start();
+function finishPhrase(i,isReview){ const text=current.items[i][0]; if(isReview){if(lessonScore!==null)scheduleReview(text,lessonScore);save();toast("Результат сохранён");go("today");return;} markDone(i); }
+function markDone(i){
+ const text=current.items[i][0];
+ if(lessonScore!==null)scheduleReview(text,lessonScore);
+ if(!store.done.includes(text)){store.done.push(text);store.xp+=10;updateStreak()}
+ save();
+ if(i+1<current.items.length){lessonPhase=0;lessonScore=null;renderLesson(i+1)}
+ else{toast("Урок завершён");go("today")}
 }
+function updateStreak(){
+ const todayKey=new Date().toISOString().slice(0,10);
+ if(store.lastDay===todayKey)return;
+ const prev=new Date();prev.setDate(prev.getDate()-1);
+ const prevKey=prev.toISOString().slice(0,10);
+ store.streak=store.lastDay===prevKey?store.streak+1:1;
+ store.lastDay=todayKey;
+}
+function speak(){
+ const phrase=findPracticePhrase();
+ shell('<section class="hero"><div class="eyebrow">Speak mode</div><h1>Теперь скажи сам</h1><p>Сначала послушай фразу, затем произнеси её. Браузер может показать распознанный текст — это ориентировочная проверка, а не фонемный анализ.</p></section>'+
+ '<div class="card"><div class="eyebrow">Твоя фраза</div><div class="phrase">'+esc(phrase[0])+'</div><div class="translation">'+esc(phrase[1])+'</div><audio id="player" controls preload="auto" src="'+(AUDIO[phrase[0]]||"")+'"></audio><button class="secondary" style="width:100%;margin-top:10px" onclick="setAudio(\''+jsq(phrase[0])+'\',true)">▶ Сначала послушать</button><button class="mic" onclick="startSpeech(\''+jsq(phrase[0])+'\')">🎙️</button><div class="small" style="text-align:center">Нажми и произнеси фразу</div><div id="speechResult" class="transcript" style="margin-top:14px">Здесь появится распознанная речь.</div></div>')
+}
+function findPracticePhrase(){
+ for(const c of COURSES){if(c.level===store.level){const x=c.items.find(i=>!store.done.includes(i[0]));if(x)return x}}
+ return COURSES[0].items[0]
+}
+function startSpeech(target){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ const box=document.getElementById("speechResult");
+ if(!SR){box.innerHTML='<span class="warning">Safari/браузер не дал доступ к распознаванию речи. Попробуйте Chrome или Safari с разрешённым микрофоном.</span>';return}
+ const r=new SR();r.lang=store.accent==="UK"?"en-GB":"en-US";r.interimResults=false;r.maxAlternatives=1;
+ box.textContent="🎙️ Слушаю…";
+ r.onresult=e=>{const got=e.results[0][0].transcript;const score=similarity(target,got);box.innerHTML='<b>'+esc(got)+'</b><br><span class="'+(score>=80?"success":"warning")+'">Похожесть: '+score+'%</span><div class="small">Это сравнение текста распознавания с целевой фразой, не полноценная проверка произношения.</div>'};
+ r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
+ r.start()
+}
+function similarity(a,b){
+ const A=a.toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/),B=b.toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/);let same=0;for(const x of A)if(B.includes(x))same++;return Math.round(same/Math.max(A.length,B.length)*100)
+}
+function english(){
+ shell('<section class="hero"><div class="eyebrow">Мой English</div><h1>Настрой обучение под себя</h1><p>Здесь мы будем собирать персональную программу, слабые фразы и привычку говорить каждый день.</p></section>'+
+ '<div class="card"><h3>Моя цель</h3><div class="goalGrid">'+[
+ ["conversation","💬","Свободно говорить","Разговорная речь"],["travel","✈️","Путешествия","Аэропорт, отель, поездки"],["work","💼","Работа и учёба","Встречи, переписка"],["daily","🏠","Повседневная жизнь","Магазины, услуги, быт"]].map(x=>'<button class="goalBtn '+(store.goal===x[0]?"active":"")+'" onclick="setGoal(\''+x[0]+'\')"><b>'+x[1]+' '+x[2]+'</b><span>'+x[3]+'</span></button>').join("")+'</div></div>'+
+ '<div class="card"><h3>Сколько времени в день?</h3><div class="timeRow">'+[5,10,15,30].map(x=>'<button class="timeBtn '+(store.minutes===x?"active":"")+'" onclick="store.minutes='+x+';save();english()">'+x+' мин</button>').join("")+'</div></div>'+
+ '<div class="card"><h3>Вариант английского</h3><div class="timeRow"><button class="timeBtn '+(store.accent==="UK"?"active":"")+'" onclick="store.accent=\'UK\';save();english()">🇬🇧 UK</button><button class="timeBtn '+(store.accent==="US"?"active":"")+'" onclick="store.accent=\'US\';save();english()">🇺🇸 US</button></div></div>'+
+ '<div class="card"><h3>Уровень</h3><div class="tabs">'+["A1","A2","B1","B2","C1"].map(x=>'<button class="tab '+(store.level===x?"active":"")+'" onclick="store.level=\''+x+'\';save();english()">'+x+'</button>').join("")+'</div></div>'+
+ '<button class="secondary" style="width:100%" onclick="resetProgress()">Сбросить прогресс</button>')
+}
+function setGoal(g){store.goal=g;save();toast("Цель обновлена");english()}
+function resetProgress(){if(confirm("Сбросить прогресс?")){store.done=[];store.xp=0;save();go("today")}}
+function toast(t){const x=document.createElement("div");x.className="toast";x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1800)}
+function go(x){page=x;({today,learn,speak,english}[x])()}
+today();
