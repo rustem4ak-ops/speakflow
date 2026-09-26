@@ -1,24 +1,27 @@
-# SpeakFlow 8.1
+# SpeakFlow iOS v1
 
-Fast iPhone-first English speaking practice.
+Native iPhone English speaking trainer.
 
-- 60 themed courses
-- 600 lessons
-- 3,000 exact English phrases
-- 3,000 pre-generated Kokoro US English audio files
-- Static MP3 audio; no Kokoro inference on the iPhone
-- 6.3-style fast Cache Storage audio engine
-- Current lesson audio is prefetched in the background
-- Speech recognition / repeat check / shadowing
-- Daily goal, streak, XP, weak-phrase review and progress
-- PWA for iPhone Safari / Home Screen
+This branch starts the new native iOS version from a clean architecture. The previous PWA implementation is not used as the application runtime.
 
-## Audio generation
+## v1 lesson loop
+1. Listen to a natural English phrase.
+2. Read the translation.
+3. Shadow the native recording.
+4. Record your own voice.
+5. Receive a pronunciation percentage.
+6. Save progress locally.
 
-GitHub Actions uses 16 parallel shards to generate the 3,000 recordings, then verifies exactly 3,000 MP3 files and 3,000 manifest entries before committing `audio/`.
+## Architecture
+- SwiftUI UI
+- AVFoundation audio playback
+- Speech framework abstraction for recognition
+- Local JSON lesson catalog
+- Local progress storage
+- Audio IDs that can later map to native-speaker recordings
+- Offline-first design
 
-The audio format is MP3, mono, 24 kHz, 64 kbps. This keeps the download footprint much smaller than 3,000 WAV files while remaining natively playable by Safari.
+The content model is intentionally compatible with hundreds of courses and thousands of phrases.
 
-## Important
-
-The app never synthesizes Kokoro audio on the iPhone. GitHub Actions creates the recordings ahead of time. The phone only downloads, caches and plays them.
+## Native audio
+Production audio should be supplied as pre-recorded native-speaker files. The app never waits for TTS generation when the user taps Play.
