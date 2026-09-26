@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 final class ProgressStore: ObservableObject {
     @Published private(set) var completedPhrases: Set<String> = []
@@ -6,17 +7,11 @@ final class ProgressStore: ObservableObject {
     private let key = "speakflow.completedPhrases"
 
     init() {
-        if let saved = UserDefaults.standard.array(forKey: key) as? [String] {
-            completedPhrases = Set(saved)
-        }
+        completedPhrases = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
     }
 
-    func markCompleted(_ phraseID: String) {
-        completedPhrases.insert(phraseID)
+    func markCompleted(_ id: String) {
+        completedPhrases.insert(id)
         UserDefaults.standard.set(Array(completedPhrases), forKey: key)
-    }
-
-    func isCompleted(_ phraseID: String) -> Bool {
-        completedPhrases.contains(phraseID)
     }
 }
