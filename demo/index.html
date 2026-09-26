@@ -1,65 +1,55 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0d12">
-<title>SpeakFlow</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a0f"><title>SpeakFlow</title>
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;color:#fff;background:#080a0f}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,#263149 0,#10131b 38%,#080a0f 72%);min-height:100vh}
 .app{max-width:520px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 18px calc(28px + env(safe-area-inset-bottom))}
-header{display:flex;justify-content:space-between;align-items:center;padding:18px 2px 10px}
-.logo{font-size:23px;font-weight:800;letter-spacing:-.7px}.pill{background:#202633;border:1px solid #343b4a;border-radius:20px;padding:7px 11px;font-size:13px;color:#cfd6e5}
-.progress{height:5px;background:#242a35;border-radius:8px;overflow:hidden;margin:12px 0 26px}.bar{height:100%;width:20%;background:#fff;border-radius:8px;transition:.25s}
-.card{background:rgba(20,24,33,.88);border:1px solid #2d3442;border-radius:28px;padding:28px 22px;box-shadow:0 18px 60px #0008}
-.label{font-size:12px;color:#8993a7;text-transform:uppercase;letter-spacing:1.2px;font-weight:700}.phrase{font-size:30px;line-height:1.15;font-weight:750;letter-spacing:-.8px;margin:14px 0 12px}.translation{font-size:17px;color:#aeb7c7;min-height:27px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:26px}.btn{border:0;border-radius:18px;padding:15px 10px;font-size:16px;font-weight:700;color:#fff;background:#2a3140}.btn.primary{background:#fff;color:#080a0f}.btn:active{transform:scale(.98)}.speak{margin-top:12px;width:100%;background:#5b6df6}.result{margin-top:18px;padding:14px;border-radius:16px;background:#111620;color:#cdd5e3}.score{font-size:42px;font-weight:800;color:#fff}.next{width:100%;margin-top:14px}.hint{font-size:13px;color:#7f899c;text-align:center;margin:18px 0}.lesson{margin-top:18px;color:#aeb7c7;font-size:14px;display:flex;justify-content:space-between}.dot{width:8px;height:8px;background:#fff;border-radius:50%;display:inline-block;margin-right:7px}
-</style>
-</head>
-<body>
-<div class="app">
-<header><div class="logo">SpeakFlow</div><div class="pill">A1 · 1/5</div></header>
-<div class="progress"><div class="bar" id="bar"></div></div>
-<div class="card">
-<div class="label">Meeting Someone</div>
-<div class="phrase" id="phrase"></div>
-<div class="translation" id="translation">Tap “Show meaning”</div>
-<div class="actions">
-<button class="btn primary" id="listen">▶ Listen</button>
-<button class="btn" id="meaning">Show meaning</button>
-</div>
-<button class="btn speak" id="speak">🎙 Speak</button>
-<div class="result" id="result" hidden><div class="score" id="score">—%</div><div id="heard"></div></div>
-<button class="btn next" id="next">Next phrase →</button>
-</div>
-<div class="lesson"><span><span class="dot"></span>Listen → Understand → Speak</span><span id="count">1/5</span></div>
-<div class="hint">Demo version · audio uses the iPhone's English voice</div>
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 2px 10px}.logo{font-size:23px;font-weight:800}.pill{background:#202633;border:1px solid #343b4a;border-radius:20px;padding:7px 11px;font-size:13px;color:#cfd6e5}
+.progress{height:5px;background:#242a35;border-radius:8px;overflow:hidden;margin:12px 0 26px}.bar{height:100%;width:0;background:#fff;border-radius:8px;transition:.25s}
+.card{background:rgba(20,24,33,.9);border:1px solid #2d3442;border-radius:28px;padding:26px 20px;box-shadow:0 18px 60px #0008}
+h1{font-size:31px;line-height:1.1;margin:8px 0 12px}.sub{color:#9da7b8;line-height:1.45}.label{font-size:12px;color:#8993a7;text-transform:uppercase;letter-spacing:1.2px;font-weight:700}
+.grid{display:grid;gap:12px;margin-top:20px}.lesson{padding:17px;border:1px solid #303746;background:#171c26;border-radius:18px;text-align:left;color:#fff}.lesson b{display:block;font-size:17px;margin-bottom:4px}.lesson span{color:#929caf;font-size:13px}
+.btn{border:0;border-radius:18px;padding:16px 12px;font-size:16px;font-weight:750;color:#fff;background:#2a3140;width:100%;margin-top:12px}.primary{background:#fff;color:#080a0f}.mic{background:#586cf4;font-size:19px}.back{background:transparent;border:1px solid #333b4a}.phrase{font-size:30px;line-height:1.15;font-weight:750;letter-spacing:-.7px;margin:14px 0 10px}.translation{font-size:17px;color:#aeb7c7;min-height:27px}
+.result{margin-top:16px;padding:15px;border-radius:17px;font-weight:700;border:1px solid #394150}.good{background:#12351f;border-color:#2d9b59}.bad{background:#3a1518;border-color:#c54d57}.score{font-size:42px;font-weight:850}.heard{font-size:13px;color:#c5cbd7;margin-top:5px;font-weight:500}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.stat{background:#171c26;border-radius:17px;padding:15px}.stat b{font-size:25px;display:block}.stat span{color:#929caf;font-size:12px}.quiz{font-size:20px;line-height:1.5;margin:16px 0}.option{text-align:left;background:#171c26;border:1px solid #303746}.option.correct{background:#12351f;border-color:#2d9b59}.option.wrong{background:#3a1518;border-color:#c54d57}.tiny{font-size:13px;color:#818b9e;text-align:center;margin-top:16px}
+</style></head>
+<body><div class="app">
+<header><div class="logo">SpeakFlow</div><div class="pill" id="level">A1</div></header>
+<div class="progress"><div class="bar" id="bar"></div></div><main id="screen"></main>
 </div>
 <script>
-const phrases=[
-["Hi, nice to meet you.","Привет, приятно познакомиться."],
-["Nice to meet you too.","Мне тоже приятно познакомиться."],
-["What's your name?","Как тебя зовут?"],
-["My name is Alex.","Меня зовут Алекс."],
-["Where are you from?","Откуда ты?"]
-];
-let i=0,recognition=null,recording=false;
-const $=id=>document.getElementById(id);
-function render(){ $("phrase").textContent=phrases[i][0];$("translation").textContent="Tap “Show meaning”";$("result").hidden=true;$("bar").style.width=((i+1)/phrases.length*100)+"%";$("count").textContent=(i+1)+"/"+phrases.length}
-function speak(){if(!("speechSynthesis"in window))return; speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(phrases[i][0]);u.lang="en-US";u.rate=.82;speechSynthesis.speak(u)}
-$("listen").onclick=speak;
-$("meaning").onclick=()=>{$("translation").textContent=phrases[i][1]};
-$("next").onclick=()=>{i=(i+1)%phrases.length;render()};
-$("speak").onclick=()=>{
- if(recording){recognition?.stop();return}
- const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SR){$("result").hidden=false;$("score").textContent="—";$("heard").textContent="Speech recognition is not available in this browser. Tap Listen and repeat aloud.";return}
- recognition=new SR();recognition.lang="en-US";recognition.interimResults=false;recognition.maxAlternatives=1;
- recording=true;$("speak").textContent="⏹ Stop & check";
- recognition.onresult=e=>{let heard=e.results[0][0].transcript;let a=phrases[i][0].toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/),b=heard.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/);let same=b.filter((w,n)=>w===a[n]).length;let score=Math.round(same/Math.max(a.length,b.length,1)*100);$("score").textContent=score+"%";$("heard").textContent="You said: "+heard;$("result").hidden=false};
- recognition.onend=()=>{recording=false;$("speak").textContent="🎙 Speak"};recognition.onerror=()=>{recording=false;$("speak").textContent="🎙 Speak"};
- recognition.start();
-};
-render();
-</script>
-</body></html>
+const topics=[
+["Everyday Life","Daily routines"],["Meeting People","Introductions"],["Family","Family and friends"],["Home","Rooms and furniture"],["Food","At a café"],["Shopping","Stores and prices"],["Travel","Airport and flights"],["Hotel","Checking in"],["City","Getting around"],["Work","Office English"],["Phone","Phone calls"],["Health","Doctor visit"],["Weather","Weather talk"],["Time","Dates and schedules"],["Hobbies","Free time"],["School","Learning"],["Technology","Apps and devices"],["Money","Payments"],["Restaurant","Ordering food"],["Transport","Public transport"],["Directions","Finding places"],["Social Life","Invitations"],["Feelings","Emotions"],["Problems","Everyday problems"],["Plans","Future plans"]];
+const subjects=["morning","work","weekend","evening","coffee","meeting","shopping","travel","family","home","phone","appointment","weather","schedule","music","English","computer","payment","dinner","bus","street","friend","feeling","problem","plan"];
+const templates=[
+["I usually start my day with {x}.","Обычно я начинаю день с {x}."],["I need to talk about {x}.","Мне нужно поговорить о {x}."],["Could you help me with {x}?","Не могли бы вы помочь мне с {x}?"],["Where can I find {x}?","Где я могу найти {x}?"],["I'd like to ask about {x}.","Я хотел бы спросить о {x}."],["I'm looking for {x}.","Я ищу {x}."],["What time does {x} start?","Во сколько начинается {x}?"],["How much does {x} cost?","Сколько стоит {x}?"],["Could you say that again?","Не могли бы вы повторить?"],["I didn't understand that.","Я этого не понял."],["Please speak a little slower.","Пожалуйста, говорите немного медленнее."],["That sounds good to me.","Меня это устраивает."],["I'm not sure yet.","Я пока не уверен."],["Let me think about it.","Дайте мне подумать."],["I'll get back to you later.","Я свяжусь с вами позже."],["Can we meet tomorrow?","Можем встретиться завтра?"],["What do you recommend?","Что вы рекомендуете?"],["Could I have some water, please?","Можно мне воды, пожалуйста?"],["I'm ready to go.","Я готов идти."],["Everything is fine.","Всё в порядке."]];
+
+function makeLesson(n){
+ const t=topics[(n-1)%topics.length], unit=Math.floor((n-1)/topics.length)+1, phrases=[];
+ for(let j=0;j<60;j++){let z=templates[j%templates.length],x=subjects[(j+unit+n)%subjects.length];phrases.push({id:"l"+n+"p"+(j+1),english:z[0].replace("{x}",x),translation:z[1].replace("{x}",x),difficulty:Math.min(5,1+Math.floor(n/125))})}
+ return {id:"lesson-"+n,title:t[0]+" · "+unit,topic:t[1],level:n<=150?"A1":n<=300?"A2":n<=400?"B1":n<=475?"B2":"C1",phrases}
+}
+const lessons=Array.from({length:500},(_,i)=>makeLesson(i+1));
+let currentLesson=Number(localStorage.getItem("sf.lesson")||1), stage="home", index=0, pool=[], results=[], quizIndex=0, quizScore=0;
+const weak=()=>JSON.parse(localStorage.getItem("sf.weak")||"[]");
+const saveWeak=(id,score,english,translation)=>{let a=weak().filter(x=>x.id!==id);if(score<100)a.unshift({id,score,english,translation});a=a.sort((x,y)=>x.score-y.score).slice(0,200);localStorage.setItem("sf.weak",JSON.stringify(a))};
+const $=x=>document.getElementById(x);
+function progress(p){$("bar").style.width=p+"%"}
+function home(){stage="home";progress(0);let l=lessons[currentLesson-1];$("level").textContent=l.level;$("screen").innerHTML='<div class="card"><div class="label">Урок '+currentLesson+' из 500 · '+l.level+'</div><h1>'+l.title+'</h1><div class="sub">'+l.topic+'<br><br>60 фраз: 20 повторение → 40 новых → проверка знаний → результат.</div><button class="btn primary" onclick="start()">Начать обучение</button></div><div class="tiny">25 тем · 500 уроков · уровни A1–C1</div><div class="grid">'+topics.slice(0,6).map((t,i)=>'<button class="lesson" onclick="pick('+i+')"><b>'+t[0]+'</b><span>'+t[1]+'</span></button>').join("")+'</div>'}
+function pick(i){currentLesson=i+1;localStorage.setItem("sf.lesson",currentLesson);home()}
+function start(){let l=lessons[currentLesson-1],w=weak(),review=w.slice(0,20);while(review.length<20){let p=l.phrases[review.length];review.push({id:p.id,english:p.english,translation:p.translation})}pool=review.concat(l.phrases.slice(0,40));results=[];index=0;stage="learn";showPhrase()}
+function showPhrase(){let p=pool[index],isReview=index<20;progress(((index)/60)*72);$("level").textContent=(isReview?"Повторение":"Новые")+" · "+(index+1)+"/60";$("screen").innerHTML='<div class="card"><div class="label">'+(isReview?"Повторение слабых фраз":"Новая фраза")+'</div><div class="phrase">'+p.english+'</div><div class="translation" id="tr">Нажмите «Прослушать», затем микрофон</div><button class="btn primary" onclick="listen()">🔊 Прослушать</button><button class="btn mic" id="mic" onclick="record()">🎙 Повторить</button><div id="res"></div><button class="btn" onclick="nextPhrase()">Дальше →</button></div><div class="tiny">'+(index+1)+' из 60</div>'}
+function listen(){let u=new SpeechSynthesisUtterance(pool[index].english);u.lang="en-US";u.rate=.8;speechSynthesis.cancel();speechSynthesis.speak(u);$("tr").textContent=pool[index].translation}
+let rec=null;
+function record(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){finishScore(0,"Распознавание речи недоступно в этом браузере.");return}rec=new SR();rec.lang="en-US";rec.interimResults=false;rec.maxAlternatives=1;$("mic").textContent="⏹ Слушаю…";rec.onresult=e=>{let heard=e.results[0][0].transcript;let a=pool[index].english.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/),b=heard.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(/\s+/);let same=b.filter((w,n)=>w===a[n]).length;finishScore(Math.round(same/Math.max(a.length,b.length,1)*100),heard)};rec.onerror=()=>finishScore(0,"Не удалось распознать речь.");rec.onend=()=>{$("mic").textContent="🎙 Повторить"};rec.start()}
+function finishScore(score,heard){results[index]=score;saveWeak(pool[index].id,score,pool[index].english,pool[index].translation);let good=score>=85;$("res").innerHTML='<div class="result '+(good?"good":"bad")+'"><div class="score">'+score+'%</div><div>'+ (good?"Правильно":"Нужно повторить")+'</div><div class="heard">'+heard+'</div></div>'}
+function nextPhrase(){if(results[index]===undefined)results[index]=0;if(index<59){index++;showPhrase()}else startQuiz()}
+function startQuiz(){stage="quiz";quizIndex=0;quizScore=0;showQuiz()}
+function showQuiz(){progress(72+(quizIndex/5)*28);let p=pool[quizIndex*12], options=[p.translation,pool[(quizIndex*12+1)%60].translation,pool[(quizIndex*12+2)%60].translation].sort(()=>Math.random()-.5);$("screen").innerHTML='<div class="card"><div class="label">Проверка знаний · '+(quizIndex+1)+'/5</div><div class="quiz">'+p.english+'</div>'+options.map(o=>'<button class="btn option" onclick="answer(this,'+JSON.stringify(o)+','+JSON.stringify(p.translation)+')">'+o+'</button>').join("")+'</div>'}
+function answer(btn,o,correct){document.querySelectorAll(".option").forEach(x=>x.disabled=true);if(o===correct){btn.classList.add("correct");quizScore++}else{btn.classList.add("wrong");document.querySelectorAll(".option").forEach(x=>{if(x.textContent===correct)x.classList.add("correct")})}setTimeout(()=>{if(quizIndex<4){quizIndex++;showQuiz()}else finishLesson()},650)}
+function finishLesson(){stage="result";progress(100);let avg=Math.round(results.reduce((a,b)=>a+b,0)/60);let perfect=results.filter(x=>x===100).length;let passed=Math.round(quizScore/5*100);$("screen").innerHTML='<div class="card"><div class="label">Урок завершён</div><h1>Результат</h1><div class="stats"><div class="stat"><b>'+avg+'%</b><span>Средний результат</span></div><div class="stat"><b>'+perfect+'/60</b><span>Идеально</span></div><div class="stat"><b>'+quizScore+'/5</b><span>Проверка знаний</span></div><div class="stat"><b>'+weak().length+'</b><span>Фраз на повторение</span></div></div><div class="sub">Следующий урок будет использовать слабые фразы для повторения.</div><button class="btn primary" onclick="nextLesson()">Следующий урок →</button><button class="btn back" onclick="home()">К списку уроков</button></div>'}
+function nextLesson(){currentLesson=currentLesson%500+1;localStorage.setItem("sf.lesson",currentLesson);home()}
+home();
+</script></body></html>
