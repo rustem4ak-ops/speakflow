@@ -1,37 +1,18 @@
-# SpeakFlow 6.2
+# SpeakFlow 8.0
 
-Готовая статическая PWA-версия SpeakFlow.
+Audio-first English PWA inspired by the public learning structure of Lisn. It uses original SpeakFlow lesson content, not copied Lisn text.
 
-## Что изменено
+## Included
+- 60 themed courses, A1–C1
+- 10 units × 5 phrases per course = 3,000 phrases
+- Today plan and 15-minute daily goal
+- streak, XP, study calendar and progress
+- weak-phrase review with simple spaced repetition
+- listen / repeat / shadowing
+- browser speech recognition with automatic stop and transcript similarity
+- listening multiple-choice test
+- offline phrase-based conversation demo
+- static Kokoro audio architecture; no neural model runs on iPhone
 
-- 18 уроков и 72 фразы из текущего SpeakFlow.
-- Английская озвучка — Kokoro `af_heart`.
-- Kokoro/ONNX не запускается на iPhone.
-- iPhone только скачивает и проигрывает готовые WAV.
-- WAV кэшируются через Cache Storage.
-- `Listen` больше не использует системный iPhone TTS для английских фраз.
-- Русский перевод по кнопке может использовать системный TTS.
-- Shadowing / SpeechRecognition сохранены.
-- XP, streak, progress и localStorage сохранены.
-- GitHub Actions автоматически генерирует недостающие WAV-файлы.
-
-## Важно
-
-WAV-файлы не включены в этот ZIP: они бинарные и должны быть сгенерированы GitHub Actions.
-После загрузки пакета в репозиторий открой GitHub → Actions → `Generate all SpeakFlow Kokoro audio` → `Run workflow`.
-
-Workflow создаёт:
-`audio/airport-1.wav` ... `audio/everyday-english-4.wav`
-
-После успешного запуска GitHub Pages будет раздавать статические WAV-файлы вместе с приложением.
-
-
-## Audio synchronization fix in 6.1
-
-The 6.1 package intentionally regenerates every WAV file from the current `data.json`.
-It also uses a new browser cache version and a URL version (`v=6.1`) so old audio from
-SpeakFlow 6.0 cannot be reused after deployment.
-
-
-## 6.2 exact-phrase audio mapping
-Audio filenames are derived from the SHA-256 hash of the exact English phrase. The player reads `audio/index.json`, so lesson order changes can never cause one phrase to play another phrase's audio.
+## Audio
+Run GitHub Actions: **Generate all SpeakFlow 8.0 Kokoro audio**. It generates 3,000 WAV files plus `audio/index.json`.
