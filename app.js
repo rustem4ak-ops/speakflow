@@ -167,29 +167,36 @@ function renderLesson(i,isReview=false){
  '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>'+
  '<div class="voiceChoices"><button class="voiceChoice primaryVoice" onclick="lessonListen(\''+jsq(text)+'\')">🔊 <span>Основное</span></button><button class="voiceChoice" onclick="lessonListenBritish(\''+jsq(text)+'\')">🇬🇧 <span>British</span></button></div>'+
  '<div class="lessonListenHint">Сравни обычное звучание и британский английский</div>'+
- '<div id="lessonSpeech" class="lessonResult">'+doneText+'</div>'+
+ '<div id="lessonSpeech" class="lessonResult">'+(lessonFinished?doneText:lessonMicMarkup(text))+'</div>'+
  '<button class="nextLessonBtn" onclick="nextLesson()"'+nextDisabled+'>Следующий урок <span>→</span><small>'+esc(nextName)+'</small></button>'+
- '</div>'+
- '<div class="lessonBottom"><button class="bottomMic" onclick="lessonSpeak(\''+jsq(text)+'\')" aria-label="Повторить фразу"><span>🎙️</span></button><div class="bottomMicText">Повтори фразу</div></div>';
+ '</div>';
  shell(body);
 }
 function lessonListen(text){
  const box=document.getElementById("lessonSpeech");
  if(box)box.innerHTML='<span class="listeningPulse">🔊 Слушаем…</span>';
- speakEnglish(text);
+ setAudio(text,true);
  setTimeout(()=>{
    const b=document.getElementById("lessonSpeech");
-   if(b&&!lessonFinished)b.innerHTML='<span class="small">Теперь нажми 🎙️ внизу и повтори фразу.</span>';
+   if(b&&!lessonFinished)b.innerHTML=lessonMicMarkup(text);
  },900);
 }
 function lessonListenBritish(text){
  const box=document.getElementById("lessonSpeech");
+ const hasBritish=voices.some(v=>v.lang&&v.lang.toLowerCase().startsWith("en-gb"));
+ if(!hasBritish){
+   if(box)box.innerHTML='<span class="warning">🇬🇧 Британский голос не найден на этом телефоне.</span><div class="small resultHint">Основное аудио остаётся доступным.</div>'+lessonMicMarkup(text);
+   return;
+ }
  if(box)box.innerHTML='<span class="listeningPulse">🇬🇧 British English…</span>';
  speakEnglish(text,"UK");
  setTimeout(()=>{
    const b=document.getElementById("lessonSpeech");
-   if(b&&!lessonFinished)b.innerHTML='<span class="small">Теперь нажми 🎙️ внизу и повтори фразу.</span>';
+   if(b&&!lessonFinished)b.innerHTML=lessonMicMarkup(text);
  },900);
+}
+function lessonMicMarkup(text){
+ return '<button class="lessonMic" onclick="lessonSpeak(\\''+jsq(text)+'\\')" aria-label="Произнести фразу">🎙️</button><div class="lessonMicText">Теперь нажми микрофон и произнеси фразу</div>';
 }
 function lessonSpeak(target){
  const box=document.getElementById("lessonSpeech");
