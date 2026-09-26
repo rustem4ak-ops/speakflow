@@ -320,15 +320,17 @@ function renderTutor(){
  const progress=Math.round((tutorTurn/tutorScenario.turns.length)*100);
  const line=tutorTurn===0?tutorScenario.opening:tutorScenario.turns[tutorTurn-1].reply;
  shell('<div class="lessonTop"><button class="back" onclick="tutor()">← Ситуации</button><span class="lessonCount">'+tutorScenario.icon+' '+tutorScenario.title+'</span></div>'+
- '<div class="card tutorCard"><div class="eyebrow">'+tutorScenario.role+'</div><div class="tutorProgress"><i style="width:'+progress+'%"></i></div>'+
+ '<div class="card tutorCard tutorCompact"><div class="eyebrow">'+tutorScenario.role+'</div><div class="tutorProgress"><i style="width:'+progress+'%"></i></div>'+
  '<div class="tutorBubble other"><small>'+tutorScenario.role+'</small><div id="tutorLine">'+esc(line)+'</div></div>'+
- '<div class="tutorActions"><button class="secondary" onclick="tutorListen()">🔊 Прослушать реплику</button><button class="secondary" onclick="tutorListen(true)">🐢 Медленно</button></div>'+
- '<div class="tutorHint"><span>💡 Подсказка</span>'+esc(turn.tip)+'</div>'+
- '<button class="tutorMic" onclick="tutorSpeak()">🎙️<small>Ответить голосом</small></button>'+
- '<div class="tutorManual"><label for="tutorText">Или напиши ответ по-английски</label><div class="tutorInputRow"><input id="tutorText" type="text" placeholder="Например: I would like a coffee" autocomplete="off"><button onclick="submitTutorText()">Проверить</button></div></div>'+
- '<div id="tutorResult" class="tutorResult">Нажми микрофон или введи ответ текстом.</div></div>'+
- '<div class="card"><div class="eyebrow">Тренировка</div><p class="muted">После ответа увидишь разбор. Можно попробовать ещё раз или продолжить диалог.</p><button class="secondary full" onclick="tutorNext()">Пропустить реплику →</button></div>');
+ '<div class="tutorActions tutorListenRow"><button class="secondary" onclick="tutorListen()">🔊 Прослушать</button><button class="secondary tutorSlow" onclick="tutorListen(true)">🐢 Медленно</button></div>'+
+ '<div class="tutorHint tutorHintCompact"><span>💡</span> '+esc(turn.tip)+'</div>'+
+ '<button class="tutorMic tutorMicCompact" onclick="tutorSpeak()">🎙️ <small>Ответить</small></button>'+
+ '<div class="tutorManual tutorManualCompact"><div class="tutorInputRow"><input id="tutorText" type="text" placeholder="Или напиши ответ…" autocomplete="off"><button onclick="submitTutorText()">✓</button></div></div>'+
+ '<div id="tutorResult" class="tutorResult tutorResultCompact">Прослушай → ответь → получи результат.</div>'+
+ '<button class="primary tutorContinue" onclick="tutorNext()" id="tutorNextBtn">Продолжить →</button>'+
+ '</div>');
 }
+
 function tutorListen(slow=false){
  const line=document.getElementById("tutorLine");
  if(!line)return;
