@@ -241,8 +241,8 @@ async function lessonSpeak(target){
   lessonScore=bestScore;
   const good=lessonScore>=80;
   finished=true;cleanup();
-  box.innerHTML='<div class="resultWord '+(good?"success":"warning")+'">'+(good?"✓ Фраза распознана":"↻ Попробуй ещё раз")+'</div><div class="recognizedText">«'+esc(bestText)+'»</div><div class="resultScore">'+lessonScore+'%</div>'+
-   (good?'<div class="small resultHint">Текст совпал достаточно хорошо. Переходим дальше…</div>':'<div class="small resultHint">Это проверка распознанного текста, а не фонемный анализ.</div>'+lessonMicMarkup(target));
+  box.innerHTML='<div class="resultWord '+(good?"success":"warning")+'">'+(good?"✓ Фраза распознана":"↻ Попробуй ещё раз")+'</div><div class="recognizedText">«'+esc(bestText)+'»</div><div class="resultScore">'+lessonScore+'%</div>'+feedbackHtml(target,bestText)+
+   (good?'<div class="small resultHint">Это проверка совпадения распознанного текста. Она не измеряет отдельные звуки.</div>':'<div class="small resultHint">Посмотри, какие слова отличаются, и повтори фразу ещё раз.</div>'+lessonMicMarkup(target));
   if(good)setTimeout(()=>{const idx=current&&current.items?current.items.findIndex(x=>x[0]===target):-1;if(idx>=0)markDone(idx)},1000);
  };
  r.onerror=e=>{
@@ -313,13 +313,39 @@ async function startSpeech(target){
  r.onresult=e=>{
    const got=e.results[0][0].transcript;
    const score=similarity(target,got);
-   box.innerHTML='<b>'+esc(got)+'</b><br><span class="'+(score>=80?"success":"warning")+'">Похожесть: '+score+'%</span><div class="small">Это сравнение текста распознавания с целевой фразой, не полноценная проверка произношения.</div>';
+   box.innerHTML='<b>'+esc(got)+'</b><br><span class="'+(score>=80?"success":"warning")+'">Похожесть: '+score+'%</span>'+feedbackHtml(target,got)+'<div class="small">Это сравнение текста распознавания с целевой фразой, а не фонемный анализ произношения.</div>';
  };
  r.onerror=e=>{
    box.innerHTML='<span class="warning">'+(e.error==="no-speech"?"Речь не распознана. Попробуй ещё раз.":"Не удалось распознать речь. Проверь разрешение микрофона Safari.")+'</span>';
  };
  try{r.start()}catch(e){box.innerHTML='<span class="warning">Не удалось запустить распознавание. Нажми ещё раз.</span>'}
 }
+function speechFeedback(target,got){
+ const norm=s=>String(s).toLowerCase().replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim();
+ const A=norm(target).split(" ").filter(Boolean),B=norm(got).split(" ").filter(Boolean);
+ const n=A.length,m=B.length;
+ const dp=Array.from({length:n+1},()=>Array(m+1).fill(0));
+ for(let i=0;i<=n;i++)dp[i][0]=i;
+ for(let j=0;j<=m;j++)dp[0][j]=j;
+ for(let i=1;i<=n;i++)for(let j=1;j<=m;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(A[i-1]===B[j-1]?0:1));
+ let i=n,j=m,missing=[],extra=[],matched=0;
+ while(i>0||j>0){
+  if(i>0&&j>0&&A[i-1]===B[j-1]){matched++;i--;j--}
+  else if(i>0&&j>0&&dp[i][j]===dp[i-1][j-1]+1){i--;j--}
+  else if(i>0&&dp[i][j]===dp[i-1][j]+1){missing.unshift(A[i-1]);i--}
+  else{extra.unshift(B[j-1]);j--}
+ }
+ return {matched,total:n,missing,extra};
+}
+function feedbackHtml(target,got){
+ const f=speechFeedback(target,got);
+ let html='<div class="feedbackBox"><b>Разбор ответа</b><div class="feedbackStats">Совпало слов: '+f.matched+' из '+f.total+'</div>';
+ if(f.missing.length)html+='<div class="feedbackLine"><span class="feedbackLabel">Пропущено:</span> '+esc(f.missing.join(" "))+'</div>';
+ if(f.extra.length)html+='<div class="feedbackLine"><span class="feedbackLabel">Добавлено:</span> '+esc(f.extra.join(" "))+'</div>';
+ if(!f.missing.length&&!f.extra.length)html+='<div class="feedbackLine success">Все слова совпали.</div>';
+ return html+'</div>';
+}
+
 function similarity(a,b){
  const norm=s=>String(s).toLowerCase().replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim();
  const A=norm(a).split(" ").filter(Boolean),B=norm(b).split(" ").filter(Boolean);
