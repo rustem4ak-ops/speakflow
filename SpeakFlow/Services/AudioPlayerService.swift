@@ -1,4 +1,5 @@
 import AVFoundation
+import SwiftUI
 
 final class AudioPlayerService: NSObject, ObservableObject {
     private var player: AVAudioPlayer?
@@ -7,7 +8,6 @@ final class AudioPlayerService: NSObject, ObservableObject {
         guard let url = Bundle.main.url(forResource: assetID, withExtension: "mp3") else {
             return
         }
-
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
             try AVAudioSession.sharedInstance().setActive(true)
@@ -17,9 +17,5 @@ final class AudioPlayerService: NSObject, ObservableObject {
         } catch {
             print("Audio error: \(error)")
         }
-    }
-
-    func stop() {
-        player?.stop()
     }
 }
