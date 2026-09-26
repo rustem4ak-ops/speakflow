@@ -25,7 +25,7 @@ struct LessonView: View {
             }
 
             HStack {
-                Button { audio.play(assetID: phrase.audio) } label: {
+                Button { audio.play(assetID: phrase.audio, fallbackText: phrase.english) } label: {
                     Label("Listen", systemImage: "play.fill")
                 }.buttonStyle(.borderedProminent)
 
