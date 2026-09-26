@@ -154,3 +154,37 @@
 
 /* SpeakFlow 37 trainer */
 .sfCoachHero h1{margin-bottom:7px}.sfLevelPicker{display:flex;gap:6px;margin:14px 0 9px}.sfLevelPicker button{flex:1;padding:9px 4px;border-radius:11px;border:1px solid #27314b;background:#121a2d;color:#aeb7cb;font-weight:800}.sfLevelPicker button.on{background:#6979df;color:#fff;border-color:#6979df}.sfThemeSelect{width:100%;background:#121a2d;color:#e9edf7;border:1px solid #27314b;border-radius:12px;padding:11px}.sfCoachProgress{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.sfCoachProgress span{font-size:11px;color:#8995b5}.sfCoachCard{text-align:center}.sfCoachPhrase{font-size:24px;font-weight:800;line-height:1.28;padding:18px 8px 8px}.sfCoachMic{width:100%;min-height:52px;font-size:16px}.sfCoachCard .tutorFeedback{text-align:left;margin-top:10px}.sfTestHero h1{font-size:27px}.sfTestHero{padding-bottom:8px}
+
+/* SpeakFlow 37 — complete Today plan */
+.sfPlanHero{padding-bottom:18px}
+.sfPlanTitleRow{display:flex;align-items:flex-start;gap:10px}
+.sfPlanTitleRow>div{flex:1}
+.sfGear{width:46px;height:46px;border-radius:14px;background:#121a2d;border:1px solid #27314b;color:#fff;font-size:21px}
+.sfPlanPromise{margin-top:12px;padding:10px 12px;border-radius:13px;background:#202a4a;border:1px solid #334064;color:#dfe4f2;font-size:13px;font-weight:750}
+.sfPlanCard{margin-top:12px}
+.sfPlanHead{display:flex;align-items:center;gap:12px}
+.sfPlanIcon{width:46px;height:46px;border-radius:14px;background:#202a4a;display:grid;place-items:center;font-size:22px;flex:none}
+.sfPlanHead h3{margin:0;font-size:16px}.sfPlanHead p{margin:4px 0 0;color:#8995b5;font-size:12px}
+.sfPlanList{margin-top:10px;max-height:260px;overflow:auto}
+.sfPlanRow{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid #20283d}
+.sfPlanNum{width:24px;height:24px;border-radius:8px;background:#202a4a;display:grid;place-items:center;font-size:11px;color:#aeb7cb;flex:none}
+.sfPlanRow div{min-width:0;flex:1}.sfPlanRow b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sfPlanRow small{display:block;color:#77839f;font-size:10px;margin-top:2px}
+.sfPlanBadge{font-size:10px;font-weight:850;padding:5px 7px;border-radius:999px;white-space:nowrap}.sfPlanBadge.bad{background:#49242b;color:#ffb2b8}.sfPlanBadge.warn{background:#4a3a20;color:#ffd98a}
+.sfPlanEmpty{padding:12px;border-radius:12px;background:#121a2d;color:#8995b5;font-size:12px;line-height:1.4}
+.sfPlanNewInfo{display:flex;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 11px;border-radius:12px;background:#121a2d;color:#aeb7cb;font-size:12px}.sfPlanNewInfo span{color:#8995b5}
+.sfDialoguePreview{margin-top:12px;padding:11px;border-radius:12px;background:#121a2d;color:#aeb7cb;font-size:12px}
+.sfPlanStart{width:100%;margin-top:14px;min-height:58px;font-size:17px}.sfPlanStart span{display:block;font-size:11px;font-weight:600;color:#c8d0e4;margin-top:3px}
+.sfPlanNote{text-align:center;color:#77839f;font-size:10px;line-height:1.4;padding:10px 12px 2px}
+.sfSettings h4{margin:18px 0 8px}.sfSetLevels{display:flex;gap:7px}.sfSetLevel{flex:1;padding:11px 5px;border-radius:12px;background:#121a2d;border:1px solid #27314b;color:#aeb7cb;font-weight:800}.sfSetLevel.on{background:#6979df;border-color:#6979df;color:#fff}
+.sfPlanLesson,.sfDialogueCard{padding:18px 15px;text-align:center}
+.sfPlanPhase{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#8995b5}.sfPlanPhase b{color:#dfe4f2;font-size:14px}
+.sfPlanTheme{margin-top:16px;color:#8995b5;font-size:11px}
+.sfPlanPhrase{font-size:24px;font-weight:850;line-height:1.28;margin:13px 0 14px}
+.sfPlanListen{width:100%;padding:13px;border-radius:15px;background:#202a4a;border:1px solid #334064;color:#fff;font-weight:800}
+.sfPlanMic{width:100%;min-height:72px;margin-top:9px;border-radius:16px;background:#6979df;border:4px solid #2b3568;color:#fff;font-size:22px;font-weight:850;box-shadow:0 10px 28px #6979df44}.sfPlanMic small{display:block;font-size:11px;margin-top:3px;font-weight:650}
+.sfPlanResult{min-height:80px;margin-top:10px;padding:11px;border-radius:15px;background:#0b1120;border:1px solid #29344f;color:#aeb7cb;display:flex;flex-direction:column;justify-content:center}
+.sfDialogueRole{margin-top:14px;color:#8995b5;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.sfDialoguePrompt{margin:8px 0 10px;padding:14px;border-radius:16px;background:#202a4a;border:1px solid #334064;font-size:17px;font-weight:750;line-height:1.35;text-align:left}
+.sfDialogueTarget{margin:10px 0;padding:11px;border-radius:13px;background:#121a2d;border:1px solid #27314b;text-align:left;color:#8995b5;font-size:11px;line-height:1.4}.sfDialogueTarget b{display:block;color:#dfe4f2;font-size:13px;margin-top:3px}
+.sfFinishStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.sfFinishStats>div{padding:12px 6px;border-radius:14px;background:#121a2d;border:1px solid #27314b}.sfFinishStats b{display:block;font-size:22px}.sfFinishStats span{display:block;color:#8995b5;font-size:10px;margin-top:2px}
+@media(max-width:480px){.sfPlanHero h1{font-size:25px}.sfPlanList{max-height:220px}.sfPlanPhrase{font-size:22px}.sfPlanNewInfo{flex-direction:column;gap:3px}}
