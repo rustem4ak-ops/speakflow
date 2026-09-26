@@ -140,48 +140,43 @@ function phaseLabel(){
  return ["1. Слушаем","2. Повторяем","3. Говорим"][lessonPhase]||"Тренировка";
 }
 function renderLesson(i,isReview=false){
- const item=current.items[i],text=item[0],tr=item[1],done=store.done.includes(text);
+ const item=current.items[i],text=item[0],tr=item[1];
  const progress=Math.round((i/current.items.length)*100);
- let body='<button class="back" onclick="go(\'learn\')">← К урокам</button>'+
- '<div class="lessonSteps"><span class="'+(lessonPhase===0?"active":"")+'">1 Слушай</span><span class="'+(lessonPhase===1?"active":"")+'">2 Повторяй</span><span class="'+(lessonPhase===2?"active":"")+'">3 Говори</span></div>'+
- '<div class="card"><div class="eyebrow">'+current.level+' · '+current.title+'</div>'+
- '<div class="small" style="margin-top:7px">Фраза '+(i+1)+' из '+current.items.length+'</div>'+
+ let body='<div class="lessonTop"><button class="back" onclick="go(\'learn\')">← К урокам</button><span class="lessonCount">'+(i+1)+' / '+current.items.length+'</span></div>'+
+ '<div class="card lessonCard"><div class="eyebrow">'+current.level+' · '+current.title+'</div>'+
  '<div class="miniMeter"><i style="width:'+progress+'%"></i></div>'+
- '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>';
- if(lessonPhase===0){
-   body+='<div class="audioBox"><div class="phaseTitle">🎧 Сначала просто послушай</div><p class="phaseText">Обрати внимание на ритм и интонацию.</p><audio id="player" controls preload="auto" src="'+(AUDIO[text]||"")+'"></audio>'+
-   '<button class="primary" onclick="speakEnglish(\''+jsq(text)+'\')">🔊 Слушать английский</button></div>'+
-   '<button class="secondary full" onclick="lessonPhase=1;renderLesson('+i+')">Я услышал → повторяем</button>';
- } else if(lessonPhase===1){
-   body+='<div class="audioBox"><div class="phaseTitle">🗣️ Повторяй сразу после голоса</div><p class="phaseText">Нажми на кнопку, послушай и повтори вслух.</p>'+
-   '<button class="primary" onclick="speakEnglish(\''+jsq(text)+'\')">🔊 Произнести образец</button>'+
-   '<button class="secondary full" onclick="lessonPhase=2;renderLesson('+i+')">Готов → теперь говорю сам</button></div>';
- } else {
-   body+='<div class="audioBox"><div class="phaseTitle">🎙️ Теперь без подсказки</div><p class="phaseText">Скажи фразу своими словами как можно ближе к образцу.</p>'+
-   '<button class="mic bigMic" onclick="lessonSpeak(\''+jsq(text)+'\')">🎙️</button>'+
-   '<div id="lessonSpeech" class="transcript">'+(lessonScore===null?"Нажми микрофон и говори.":"Результат последней попытки: "+lessonScore+"%")+'</div></div>'+
-   '<button id="finishLessonBtn" class="primary '+(lessonScore===null?"disabled":"")+'" '+(lessonScore===null?"disabled":"")+' onclick="finishPhrase('+i+','+isReview+')">'+(isReview?"✓ Сохранить результат":"✓ Завершить фразу")+'</button>';
- }
- body+='</div>';
+ '<div class="phrase">'+esc(text)+'</div><div class="translation">'+esc(tr)+'</div>'+
+ '<button class="listenCircle" aria-label="Слушать" onclick="speakEnglish(\''+jsq(text)+'\')"><span>🔊</span></button>'+
+ '<div class="listenHint">Нажми, чтобы услышать фразу</div>'+
+ '<div id="lessonSpeech" class="lessonResult">'+(lessonScore===null?'<span class="small">Когда будешь готов — нажми микрофон внизу</span>':'Результат: '+lessonScore+'%')+'</div>'+
+ '</div>'+
+ '<div class="lessonBottom"><button class="bottomMic" onclick="lessonSpeak(\''+jsq(text)+'\')" aria-label="Говорить"><span>🎙️</span></button><div class="bottomMicText">Скажи фразу</div></div>';
  shell(body);
 }
 function lessonSpeak(target){
  const box=document.getElementById("lessonSpeech");
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!SR){
-   box.innerHTML='<span class="warning">Распознавание речи недоступно в этом браузере. Можно продолжить через «Говорить».</span>';
+   box.innerHTML='<span class="warning">Распознавание речи недоступно. Проверь разрешение микрофона.</span>';
    return;
  }
  const r=new SR();
  r.lang=store.accent==="UK"?"en-GB":"en-US";
  r.interimResults=false;r.maxAlternatives=1;
- box.textContent="🎙️ Слушаю…";
+ box.innerHTML='<span class="listeningPulse">🎙️ Слушаю…</span>';
  r.onresult=e=>{
    const got=e.results[0][0].transcript;
    lessonScore=similarity(target,got);
-   box.innerHTML='<b>'+esc(got)+'</b><br><span class="'+(lessonScore>=80?"success":"warning")+'">Похожесть текста: '+lessonScore+'%</span><div class="small">Это пока проверка распознанного текста, а не полноценный фонемный анализ произношения.</div>';
-   const btn=document.getElementById("finishLessonBtn");
-   if(btn){btn.disabled=false;btn.classList.remove("disabled")}
+   const good=lessonScore>=80;
+   box.innerHTML='<div class="resultWord '+(good?"success":"warning")+'">'+(good?"✓ Отлично!":"↻ Попробуй ещё раз")+'</div><b>'+esc(got)+'</b><div class="resultScore">'+lessonScore+'%</div>';
+   if(good){
+     setTimeout(()=>{
+       const idx=current.items.findIndex(x=>x[0]===target);
+       if(idx>=0){markDone(idx);}
+     },1100);
+   }else{
+     setTimeout(()=>{box.innerHTML+='<div class="small">Нажми 🎙️ и повтори ещё раз.</div>'},700);
+   }
  };
  r.onerror=()=>box.innerHTML='<span class="warning">Не удалось распознать речь. Проверь разрешение микрофона.</span>';
  r.start();
