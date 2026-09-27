@@ -44,7 +44,10 @@ struct SpeakView: View {
             if let result {
                 Text("\(result.percentage)%")
                     .font(.system(size: 56, weight: .bold, design: .rounded))
-                Text("Speaking match").foregroundStyle(.secondary)
+                Text("\(result.matchedWords) из \(result.totalWords) слов")
+                    .foregroundStyle(.secondary)
+                Text("Проверка совпадения распознанной речи")
+                    .font(.caption).foregroundStyle(.tertiary)
             }
 
             Spacer()
