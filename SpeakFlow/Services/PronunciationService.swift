@@ -3,33 +3,38 @@ import Foundation
 struct PronunciationResult {
     let percentage: Int
     let recognizedText: String
+    let matchedWords: Int
+    let totalWords: Int
 }
 
 struct PronunciationService {
     func score(reference: String, recognized: String) -> PronunciationResult {
-        let a = normalize(reference)
-        let b = normalize(recognized)
-        guard !a.isEmpty else { return .init(percentage: 0, recognizedText: recognized) }
-
-        let distance = levenshtein(Array(a), Array(b))
-        let maxLength = max(a.count, b.count, 1)
-        let score = max(0, min(100, Int((1.0 - Double(distance) / Double(maxLength)) * 100)))
-        return .init(percentage: score, recognizedText: recognized)
+        let referenceWords = words(reference)
+        let recognizedWords = words(recognized)
+        guard !referenceWords.isEmpty else {
+            return .init(percentage: 0, recognizedText: recognized, matchedWords: 0, totalWords: 0)
+        }
+        let distance = wordLevenshtein(referenceWords, recognizedWords)
+        let maxCount = max(referenceWords.count, recognizedWords.count, 1)
+        let percentage = max(0, min(100, Int((1.0 - Double(distance) / Double(maxCount)) * 100)))
+        let matched = max(0, referenceWords.count - distance)
+        return .init(percentage: percentage, recognizedText: recognized, matchedWords: matched, totalWords: referenceWords.count)
     }
 
-    private func normalize(_ value: String) -> String {
+    private func words(_ value: String) -> [String] {
         value.lowercased()
-            .replacingOccurrences(of: "[^a-z0-9 ]", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "[^a-z0-9' ]", with: "", options: .regularExpression)
             .split(separator: " ")
-            .joined(separator: " ")
+            .map(String.init)
     }
 
-    private func levenshtein(_ a: [Character], _ b: [Character]) -> Int {
+    private func wordLevenshtein(_ a: [String], _ b: [String]) -> Int {
         var row = Array(0...b.count)
         for i in 1...a.count {
             var next = [i]
             for j in 1...b.count {
-                next.append(min(next[j - 1] + 1, row[j] + 1, row[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1)))
+                let cost = a[i - 1] == b[j - 1] ? 0 : 1
+                next.append(min(next[j - 1] + 1, row[j] + 1, row[j - 1] + cost))
             }
             row = next
         }
